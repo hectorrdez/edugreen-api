@@ -1,0 +1,5 @@
+timestamp|scope|type|content
+2024/06/24 19:56:23|⚡ API|INFO|Api started at 3000
+2024/06/24 19:56:27|🕹️ HealthController:get|INFO|System checking health...
+2024/06/24 19:56:27|🕹️ HealthController:get|INFO|Returning the response
+2024/06/24 19:56:27|🕹️ HealthController:get|ERROR|Cannot set headers after they are sent to the client

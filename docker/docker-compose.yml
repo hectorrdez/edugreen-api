@@ -1,0 +1,43 @@
+name: "scouttech-user-service"
+services:
+  api:
+    container_name: user_api
+    build:
+      context: .
+    ports:
+      - 3002:3002
+    env_file:
+      - ../.env
+    develop:
+      watch:
+        - path: ../package.json
+          action: rebuild
+        - path: ../src
+          target: /home/app/src
+          action: sync
+    volumes:
+      - type: bind
+        source: ../
+        target: /home/app
+    networks:
+      - scouttech
+  db:
+    image: mysql:latest
+    restart: on-failure
+    container_name: user_db
+    environment:
+      MYSQL_ROOT_PASSWORD: hola
+      MYSQL_DATABASE: scouttech
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    volumes:
+      - db_data:/var/lib/mysql
+      - type: bind
+        source: ../db
+        target: /docker-entrypoint-initdb.d
+      - ./mysql.cnf:/etc/mysql/my.cnf
+networks:
+  scouttech:
+    external: true
+volumes:
+  db_data:

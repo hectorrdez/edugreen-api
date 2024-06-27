@@ -1,0 +1,4 @@
+/node_modules
+/data/logs
+/data/errors
+/docker/mysql.cnf

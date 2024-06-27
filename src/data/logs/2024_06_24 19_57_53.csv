@@ -1,0 +1,6 @@
+timestamp|scope|type|content
+2024/06/24 19:57:53|⚡ API|INFO|Api started at 3000
+2024/06/24 19:58:51|🕹️ HealthController:get|INFO|System checking health...
+2024/06/24 19:58:51|🕹️ HealthController:get|INFO|Returning the response
+2024/06/24 20:06:22|🕹️ HealthController:get|INFO|System checking health...
+2024/06/24 20:06:22|🕹️ HealthController:get|INFO|Returning the response
