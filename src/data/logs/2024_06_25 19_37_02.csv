@@ -1,4 +1,0 @@
-timestamp|scope|type|content
-2024/06/25 19:37:02|⚡ API|INFO|Api started at 3175
-2024/06/25 19:37:04|🕹️ UserController:getOne|INFO|Getting user info
-2024/06/25 19:37:04|🕹️ UserController:getOne|INFO|Returning response
