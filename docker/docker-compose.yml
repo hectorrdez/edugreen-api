@@ -1,7 +1,7 @@
-name: "scouttech-user-service"
+name: "edugreen"
 services:
   api:
-    container_name: user_api
+    container_name: api
     build:
       context: .
     ports:
@@ -20,24 +20,30 @@ services:
         source: ../
         target: /home/app
     networks:
-      - scouttech
+      - edugreen
+    links:
+      - db
   db:
     image: mysql:latest
     restart: on-failure
-    container_name: user_db
+    container_name: db
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: hola
-      MYSQL_DATABASE: scouttech
+      MYSQL_DATABASE: edugreen
       MYSQL_USER: admin
       MYSQL_PASSWORD: admin
+    tmpfs:
+      - /var/run/mysqld
     volumes:
       - db_data:/var/lib/mysql
       - type: bind
         source: ../db
         target: /docker-entrypoint-initdb.d
-      - ./mysql.cnf:/etc/mysql/my.cnf
+
 networks:
-  scouttech:
+  edugreen:
     external: true
 volumes:
   db_data:
