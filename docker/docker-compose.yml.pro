@@ -20,7 +20,7 @@ services:
       REPORTING: ${REPORTING}
       REPORTING_FOLDER: ${REPORTING_FOLDER}
     networks:
-      - edugreen
+      - edugreen_pro
     depends_on:
       edugreen_pro_db:
         condition: service_healthy
