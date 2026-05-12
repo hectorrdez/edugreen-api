@@ -13,7 +13,7 @@ services:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASS: ${DB_PASS}
       DB_NAME: ${DB_NAME}
       API_SECRET: ${API_SECRET}
       API_REFRESH_SECRET: ${API_REFRESH_SECRET}
