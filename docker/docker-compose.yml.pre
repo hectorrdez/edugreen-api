@@ -1,0 +1,44 @@
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+    ports:
+      - 3002:3002
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: edugreen
+      # Añade aquí el resto de tus variables de entorno
+      # O mejor, ponlas en la pestaña "Environment" de Dokploy
+    networks:
+      - edugreen
+    depends_on:
+      - db
+
+  db:
+    image: mysql:latest
+    restart: on-failure
+    container_name: db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: hola
+      MYSQL_DATABASE: edugreen
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    tmpfs:
+      - /var/run/mysqld
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - edugreen
+
+networks:
+  edugreen:
+    external: false   # ✅ Docker la crea automáticamente
+
+volumes:
+  db_data:
