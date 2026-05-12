@@ -1,4 +1,3 @@
-name: "edugreen"
 services:
   api:
     container_name: api
