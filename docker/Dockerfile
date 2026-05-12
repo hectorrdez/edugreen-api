@@ -11,9 +11,11 @@ RUN mkdir -p /home/app
 # tomar como referencia
 WORKDIR /home/app
 
+COPY package*.json ./
+
 # Expone el puerto del contener para que
 # sea accesible desde el exterior
-EXPOSE 3000
+EXPOSE 3002
 
 # El CMD lanzara el comando al arrancar
 # el contenedor. Este esta configurado
