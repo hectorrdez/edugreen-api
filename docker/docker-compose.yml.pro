@@ -49,7 +49,7 @@ services:
       retries: 5
       start_period: 30s
     ports:
-      - 3306:3306
+      - ${DB_PORT}:3306
 networks:
   edugreen_pro:
     external: false
