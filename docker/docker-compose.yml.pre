@@ -27,10 +27,8 @@ services:
     restart: on-failure
     container_name: db
     environment:
-      MYSQL_ROOT_PASSWORD: hola
-      MYSQL_DATABASE: edugreen
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
     tmpfs:
       - /var/run/mysqld
     volumes:
