@@ -8,6 +8,7 @@ export default class ApiKeyMiddleware extends Middleware {
 
     if (!req.headers || !req.headers.authorization) {
       res.status(401).json({ message: "Unauthorized" });
+      return;
     }
 
     const { authorization } = req.headers;
@@ -15,6 +16,7 @@ export default class ApiKeyMiddleware extends Middleware {
 
     if (authorization !== API_KEY) {
       res.status(403).json({ message: "Forbidden" });
+      return;
     }
 
     next();
