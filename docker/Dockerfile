@@ -11,7 +11,7 @@ RUN mkdir -p /home/app
 # tomar como referencia
 WORKDIR /home/app
 
-COPY package*.json ./
+COPY ../package*.json ./
 
 # Expone el puerto del contener para que
 # sea accesible desde el exterior
