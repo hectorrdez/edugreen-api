@@ -21,9 +21,14 @@ services:
       REPORTING_FOLDER: ${REPORTING_FOLDER}
     networks:
       - edugreen
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
-    image: mysql:8.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.db
     restart: on-failure
     container_name: db
     environment:
@@ -36,13 +41,11 @@ services:
     networks:
       - edugreen
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "admin", "-padmin"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    ports:
-      - 3306:3306
 
 networks:
   edugreen:
