@@ -10,7 +10,8 @@ dotenv.config();
 const app: Express = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-const { API_PORT, REPORTING_FOLDER } = process.env;
+const API_PORT = process.env.API_PORT ?? '3002';
+const REPORTING_FOLDER = process.env.REPORTING_FOLDER ?? 'data/';
 const dateStamp = DateUtils.obtainCurrentDateString().replace(/[/:]/g, "_");
 
 Logger.logFileName = `${REPORTING_FOLDER}logs/${dateStamp}.csv`;
