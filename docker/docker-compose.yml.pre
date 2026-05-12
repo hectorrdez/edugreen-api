@@ -16,9 +16,6 @@ services:
       # El resto de variables de entorno ponlas en la pestaña "Environment" de Dokploy
     networks:
       - edugreen
-    depends_on:
-      db:
-        condition: service_healthy
 
   db:
     image: mysql:8.0
