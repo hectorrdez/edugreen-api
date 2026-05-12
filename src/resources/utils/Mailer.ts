@@ -20,7 +20,7 @@ export default class Mailer {
         });
     }
     public send(from: string, to: string, subject: string, html: string): void {
-        this.mailer.sendMail({ from: from, to: to, subject: subject, html: html }, (error, info) => {
+        this.mailer.sendMail({ from: from, to: to, subject: subject, html: html }, (error: Error | null, info: nodemailer.SentMessageInfo) => {
             if (error) {
                 Logger.error("Can't send email", "Mailer");
                 throw new ApiError("Can't send email");
