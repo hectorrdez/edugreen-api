@@ -15,7 +15,7 @@ const LOGO = `<table cellpadding="0" cellspacing="0" border="0" style="line-heig
 
 function base(title: string, body: string): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,7 +45,7 @@ function base(title: string, body: string): string {
           <tr>
             <td style="background:#000000;border-radius:0 0 12px 12px;padding:24px 32px;text-align:center;">
               <p style="margin:0 0 4px;font-size:13px;color:#ffffff;font-weight:600;">EduGreen</p>
-              <p style="margin:0;font-size:12px;color:#9ca3af;">This email was sent automatically. Please do not reply.</p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">Este correo se ha enviado automáticamente. Por favor, no respondas.</p>
             </td>
           </tr>
 
@@ -60,9 +60,9 @@ function base(title: string, body: string): string {
 export default class ClassEmails {
   static classCreatedEmail(tutorName: string, className: string, classDescription: string | null): string {
     const body = `
-      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111111;">Your class is ready</h1>
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111111;">Tu clase está lista</h1>
       <p style="margin:0 0 28px;font-size:15px;color:#4d535e;line-height:1.6;">
-        Hi <strong>${tutorName}</strong>, your new class has been created successfully.
+        Hola <strong>${tutorName}</strong>, tu nueva clase ha sido creada correctamente.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:28px;">
@@ -75,7 +75,7 @@ export default class ClassEmails {
       </table>
 
       <p style="margin:0 0 28px;font-size:15px;color:#4d535e;line-height:1.6;">
-        You can now add students and create challenges for this class from your EduGreen dashboard.
+        Ya puedes añadir alumnos y crear desafíos para esta clase desde tu panel de EduGreen.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
@@ -83,16 +83,16 @@ export default class ClassEmails {
           <td style="background:#12ea36;border-radius:15px;text-align:center;">
             <a href="${process.env.CLIENT_DOMAIN}"
                style="display:inline-block;min-height:44px;padding:12px 28px;font-size:15px;font-weight:700;color:#000000;text-decoration:none;line-height:20px;border-radius:15px;text-align:center;">
-              Go to dashboard
+              Ir al panel
             </a>
           </td>
         </tr>
       </table>
 
       <hr style="margin:32px 0;border:none;border-top:1px solid #e5e7eb;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;">If you did not create this class, please contact your administrator.</p>
+      <p style="margin:0;font-size:12px;color:#9ca3af;">Si no has creado esta clase, contacta con tu administrador.</p>
     `;
-    return base(`Class "${className}" created`, body);
+    return base(`Clase "${className}" creada`, body);
   }
 
   static challengeCreatedEmail(
@@ -103,9 +103,9 @@ export default class ClassEmails {
     challengeDescription: string | null,
   ): string {
     const body = `
-      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111111;">Challenge created</h1>
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111111;">Desafío creado</h1>
       <p style="margin:0 0 28px;font-size:15px;color:#4d535e;line-height:1.6;">
-        Hi <strong>${tutorName}</strong>, a new challenge has been added to <strong>${className}</strong>.
+        Hola <strong>${tutorName}</strong>, se ha añadido un nuevo desafío a <strong>${className}</strong>.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:28px;">
@@ -119,7 +119,7 @@ export default class ClassEmails {
       </table>
 
       <p style="margin:0 0 28px;font-size:15px;color:#4d535e;line-height:1.6;">
-        Students enrolled in <strong>${className}</strong> can now participate in this challenge.
+        Los alumnos matriculados en <strong>${className}</strong> ya pueden participar en este desafío.
       </p>
 
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;">
@@ -127,15 +127,15 @@ export default class ClassEmails {
           <td style="background:#12ea36;border-radius:15px;text-align:center;">
             <a href="${process.env.CLIENT_DOMAIN}"
                style="display:inline-block;min-height:44px;padding:12px 28px;font-size:15px;font-weight:700;color:#000000;text-decoration:none;line-height:20px;border-radius:15px;text-align:center;">
-              Go to dashboard
+              Ir al panel
             </a>
           </td>
         </tr>
       </table>
 
       <hr style="margin:32px 0;border:none;border-top:1px solid #e5e7eb;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;">If you did not create this challenge, please contact your administrator.</p>
+      <p style="margin:0;font-size:12px;color:#9ca3af;">Si no has creado este desafío, contacta con tu administrador.</p>
     `;
-    return base(`Challenge "${challengeName}" created`, body);
+    return base(`Desafío "${challengeName}" creado`, body);
   }
 }

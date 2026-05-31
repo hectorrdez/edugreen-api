@@ -40,6 +40,9 @@ services:
       - type: bind
         source: ../db
         target: /docker-entrypoint-initdb.d
+      - type: bind
+        source: ./mysql.cnf
+        target: /etc/mysql/conf.d/mysql.cnf
 
 networks:
   edugreen:

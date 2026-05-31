@@ -1,5 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DROP DATABASE IF EXISTS `edugreen`;
-CREATE DATABASE `edugreen`;
+CREATE DATABASE `edugreen` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `edugreen`;
 
 DROP TABLE IF EXISTS `stats`;
@@ -54,6 +56,7 @@ CREATE TABLE `challenge`(
     `auto_enroll` BOOLEAN NOT NULL DEFAULT FALSE,
     `participants` INT NOT NULL DEFAULT 0,
     `class_id` VARCHAR(40) NOT NULL,
+    `end_date` DATETIME DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`class_id`) REFERENCES `class`(`id`) ON DELETE CASCADE

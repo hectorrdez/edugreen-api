@@ -14,6 +14,7 @@ export default class ChallengeModel extends Model {
       Boolean(row.auto_enroll),
       row.description ?? null,
       row.image ?? null,
+      row.end_date ?? null,
       row.created_at ?? null,
       row.updated_at ?? null,
       Number(row.participants ?? 0),
@@ -42,17 +43,21 @@ export default class ChallengeModel extends Model {
     }
   }
 
-  static async findByClassId(class_id: string): Promise<Challenge[]> {
+  static async findByClassId(class_id: string): Promise<any[]> {
     const scope = "💽 ChallengeModel:" + "findByClassId";
     const entryTime = DateUtils.obtainCurrentDate();
     try {
       Logger.write("Finding challenges by class", scope);
       const [rows]: any = await this.connection.execute(
-        `SELECT * FROM challenge WHERE class_id = ?;`,
+        `SELECT c.*,
+          CASE WHEN c.participants = 0 THEN 0
+               ELSE ROUND((SELECT COUNT(*) FROM enrollment sub WHERE sub.challenge_id = c.id AND sub.completed_at IS NOT NULL) * 100.0 / c.participants)
+          END AS progress
+         FROM challenge c WHERE c.class_id = ?;`,
         [class_id],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
-      return rows.map((row: any) => this.mapRow(row));
+      return rows.map((row: any) => ({ ...this.mapRow(row), progress: Number(row.progress ?? 0) }));
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -69,14 +74,18 @@ export default class ChallengeModel extends Model {
     try {
       Logger.write("Finding enrolled challenges by class and user", scope);
       const [rows]: any = await this.connection.execute(
-        `SELECT c.*
+        `SELECT c.*,
+          CASE WHEN e.completed_at IS NOT NULL THEN 'completed' ELSE 'in_progress' END AS status,
+          CASE WHEN c.participants = 0 THEN 0
+               ELSE ROUND((SELECT COUNT(*) FROM enrollment sub WHERE sub.challenge_id = c.id AND sub.completed_at IS NOT NULL) * 100.0 / c.participants)
+          END AS progress
          FROM challenge c
          INNER JOIN enrollment e ON e.challenge_id = c.id AND e.user_id = ?
          WHERE c.class_id = ?;`,
         [user_id, class_id],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
-      return rows.map((row: any) => ({ ...this.mapRow(row), enrolled: true }));
+      return rows.map((row: any) => ({ ...this.mapRow(row), enrolled: true, status: row.status, progress: Number(row.progress ?? 0) }));
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -94,14 +103,22 @@ export default class ChallengeModel extends Model {
       Logger.write("Finding challenges by class with enrollment status", scope);
       const [rows]: any = await this.connection.execute(
         `SELECT c.*,
-          CASE WHEN e.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS enrolled
+          CASE WHEN e.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS enrolled,
+          CASE
+            WHEN e.user_id IS NULL THEN NULL
+            WHEN e.completed_at IS NOT NULL THEN 'completed'
+            ELSE 'in_progress'
+          END AS status,
+          CASE WHEN c.participants = 0 THEN 0
+               ELSE ROUND((SELECT COUNT(*) FROM enrollment sub WHERE sub.challenge_id = c.id AND sub.completed_at IS NOT NULL) * 100.0 / c.participants)
+          END AS progress
          FROM challenge c
          LEFT JOIN enrollment e ON e.challenge_id = c.id AND e.user_id = ?
          WHERE c.class_id = ?;`,
         [user_id, class_id],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
-      return rows.map((row: any) => ({ ...this.mapRow(row), enrolled: Boolean(row.enrolled) }));
+      return rows.map((row: any) => ({ ...this.mapRow(row), enrolled: Boolean(row.enrolled), status: row.status ?? null, progress: Number(row.progress ?? 0) }));
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -112,14 +129,44 @@ export default class ChallengeModel extends Model {
     }
   }
 
-  static async create(id: string, name: string, class_id: string, points: number, auto_enroll: boolean, description: string | null, image: string | null): Promise<void> {
+  static async findByIdWithUserStatus(id: string, user_id: string): Promise<any | null> {
+    const scope = "💽 ChallengeModel:" + "findByIdWithUserStatus";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Finding challenge with user status", scope);
+      const [rows]: any = await this.connection.execute(
+        `SELECT c.*,
+          CASE
+            WHEN e.user_id IS NULL THEN NULL
+            WHEN e.completed_at IS NOT NULL THEN 'completed'
+            ELSE 'in_progress'
+          END AS status
+         FROM challenge c
+         LEFT JOIN enrollment e ON e.challenge_id = c.id AND e.user_id = ?
+         WHERE c.id = ?;`,
+        [user_id, id],
+      );
+      Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
+      if (rows[0] === undefined) return null;
+      return { ...this.mapRow(rows[0]), status: rows[0].status ?? null };
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't find the challenge");
+    }
+  }
+
+  static async create(id: string, name: string, class_id: string, points: number, auto_enroll: boolean, description: string | null, image: string | null, end_date: string | null): Promise<void> {
     const scope = "💽 ChallengeModel:" + "create";
     const entryTime = DateUtils.obtainCurrentDate();
     try {
       Logger.write("Creating challenge", scope);
       await this.connection.execute(
-        `INSERT INTO challenge (id, name, class_id, points, auto_enroll, description, image) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        [id, name, class_id, points, auto_enroll, description, image],
+        `INSERT INTO challenge (id, name, class_id, points, auto_enroll, description, image, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        [id, name, class_id, points, auto_enroll, description, image, end_date],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
     } catch (err) {
@@ -132,7 +179,7 @@ export default class ChallengeModel extends Model {
     }
   }
 
-  static async updateById(id: string, fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null }): Promise<void> {
+  static async updateById(id: string, fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null; end_date?: string | null }): Promise<void> {
     const scope = "💽 ChallengeModel:" + "updateById";
     const entryTime = DateUtils.obtainCurrentDate();
     try {

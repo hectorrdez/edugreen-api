@@ -9,6 +9,7 @@ export default class Challenge extends Entity {
     public readonly auto_enroll: boolean,
     public readonly description: string | null,
     public readonly image: string | null,
+    public readonly end_date: Date | null,
     public readonly created_at: Date | null,
     public readonly updated_at: Date | null,
     public readonly participants: number = 0,

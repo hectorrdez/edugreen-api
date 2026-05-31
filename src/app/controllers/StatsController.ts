@@ -76,10 +76,17 @@ export default class StatsController extends Controller {
       }
       Logger.write("Finding stats for challenge", scope);
       const completions = await StatsModel.findByChallengeId(req.params.challenge_id);
+      const completed_participants = completions.length;
+      const total_participants = challenge.participants;
+      const progress = total_participants > 0
+        ? Math.round((completed_participants / total_participants) * 100)
+        : 0;
       Logger.write("Returning response", scope);
       new DataView(res, {
         challenge_id: req.params.challenge_id,
-        total_completions: completions.length,
+        completed_participants,
+        total_participants,
+        progress,
         completions,
       }, entryTime).send();
     } catch (err) {

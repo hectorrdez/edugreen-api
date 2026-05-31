@@ -95,6 +95,41 @@ Los roles disponibles son `student`, `teacher` y `admin`. El rol se asigna autom
 
 ---
 
+## Credenciales de prueba
+
+### Admins
+| Email | Contraseña |
+|---|---|
+| `test.admin@edugreen.com` | `test_admin` |
+| `hectorrdez@gmail.com` | `hectorrdez` |
+
+### Teachers
+| Email | Contraseña | Institución |
+|---|---|---|
+| `test.teacher@teacher.edugreen.com` | `test_teacher` | EduGreen Institute |
+| `carlos.lopez@teacher.edugreen.com` | `carlos_lopez` | EduGreen Institute |
+| `maria.garcia@edu.gva.es` | `maria_garcia` | Institutos de Alicante |
+
+### Students — EduGreen Institute
+| Email | Contraseña |
+|---|---|
+| `test.student@student.edugreen.com` | `test_student` |
+| `ana.martinez@student.edugreen.com` | `ana_martinez` |
+| `luis.fernandez@student.edugreen.com` | `luis_fernandez` |
+| `sofia.ruiz@student.edugreen.com` | `sofia_ruiz` |
+| `pablo.sanchez@student.edugreen.com` | `pablo_sanchez` |
+| `lucia.perez@student.edugreen.com` | `lucia_perez` |
+
+### Students — Institutos de Alicante
+| Email | Contraseña |
+|---|---|
+| `hecrodtov@alu.edu.gva.es` | `hecrodtov` |
+| `juan.gomez@alu.edu.gva.es` | `juan_gomez` |
+| `carmen.diaz@alu.edu.gva.es` | `carmen_diaz` |
+| `roberto.torres@alu.edu.gva.es` | `roberto_torres` |
+
+---
+
 ## Endpoints
 
 Base URL: `/api`

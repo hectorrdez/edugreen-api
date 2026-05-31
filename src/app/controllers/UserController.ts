@@ -260,13 +260,24 @@ export default class UserController extends Controller {
       if (req.params.id === undefined) {
         throw new NotEnoughDataError("Can't find the user without the id");
       }
-      const response = await UserModel.findById(req.params.id);
-      if (!response) {
+      const user = await UserModel.findById(req.params.id);
+      if (!user) {
         new ErrorView(res, 404, "User not found", entryTime).send();
         return;
       }
       Logger.write("Returning response", scope);
-      new DataView(res, response, entryTime).send();
+      new DataView(res, {
+        id: user.id,
+        name: user.name,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        points: user.points,
+        institution_id: user.institution_id,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        last_login_at: user.last_login_at,
+      }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
