@@ -119,14 +119,14 @@
     </div>
     <ul>
       <li><a href="#global-mw">Middleware global</a></li>
-      <li><a href="#group-health">health</a></li><li><a href="#group-auth">auth</a></li><li><a href="#group-user">user</a></li><li><a href="#group-class">class</a></li><li><a href="#group-institution">institution</a></li><li><a href="#group-user-class">user-class</a></li><li><a href="#group-enrollment">enrollment</a></li><li><a href="#group-challenge">challenge</a></li><li><a href="#group-stats">stats</a></li>
+      <li><a href="#group-health">health</a></li><li><a href="#group-auth">auth</a></li><li><a href="#group-user">user</a></li><li><a href="#group-class">class</a></li><li><a href="#group-institution">institution</a></li><li><a href="#group-user-class">user-class</a></li><li><a href="#group-enrollment">enrollment</a></li><li><a href="#group-challenge">challenge</a></li><li><a href="#group-newsletter">newsletter</a></li><li><a href="#group-stats">stats</a></li>
     </ul>
   </aside>
 
   <main>
     <div class="page-header">
       <h1>Edugreen API Gateway</h1>
-      <p>Versión 1.0.0 · 36 endpoints</p>
+      <p>Versión 1.0.0 · 50 endpoints</p>
     </div>
 
     <div class="mw-card" id="global-mw">
@@ -205,7 +205,7 @@
       <div class="endpoint-header" onclick="toggle(1)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/auth</span>
-        <span class="endpoint-desc-inline">Registra un nuevo usuario. Hashea la contraseña y devuelve un accessToken (1h) y un refreshToken (7d).</span>
+        <span class="endpoint-desc-inline">Primera fase del registro. Valida los datos, hashea la contraseña, detecta la institución por dominio de email y envía un email de verificación con un JWT firmado con API_REGISTER_SECRET (válido 5min) en la URL CLIENT_DOMAIN?t={jwt}. No crea el usuario en base de datos.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
@@ -213,7 +213,7 @@
         </div>
       </div>
       <div class="endpoint-body" id="body-1" style="display:none">
-        <p class="full-desc">Registra un nuevo usuario. Hashea la contraseña y devuelve un accessToken (1h) y un refreshToken (7d).</p>
+        <p class="full-desc">Primera fase del registro. Valida los datos, hashea la contraseña, detecta la institución por dominio de email y envía un email de verificación con un JWT firmado con API_REGISTER_SECRET (válido 5min) en la URL CLIENT_DOMAIN?t={jwt}. No crea el usuario en base de datos.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -247,15 +247,12 @@
             <div class="responses-wrapper">
       <div class="response-item">
         <span class="status-badge" style="background:#49cc90">200</span>
-        <span class="response-desc">Usuario creado correctamente</span>
+        <span class="response-desc">Email de verificación enviado</span>
         
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">id</td><td class="param-desc">string — UUID del usuario recién creado</td></tr>
-          <tr><td class="param-name">role</td><td class="param-desc">string — rol asignado: 'student' | 'teacher' | 'admin'</td></tr>
-          <tr><td class="param-name">sessionToken</td><td class="param-desc">string — JWT con payload {id, name, lastName, email, role}, expira en 1h</td></tr>
-          <tr><td class="param-name">refreshToken</td><td class="param-desc">string — JWT con payload {id}, expira en 7d</td></tr></tbody>
+          <tr><td class="param-name">message</td><td class="param-desc">string — 'Verification email sent'</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -279,9 +276,9 @@
     </div>
     <div class="endpoint-card" id="ep-2">
       <div class="endpoint-header" onclick="toggle(2)">
-        <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
-        <span class="endpoint-path">/auth</span>
-        <span class="endpoint-desc-inline">Solicita un token de recuperación de contraseña para el email indicado. El token JWT tiene una validez de 5 minutos.</span>
+        <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
+        <span class="endpoint-path">/auth/register</span>
+        <span class="endpoint-desc-inline">Segunda fase del registro. Recibe el JWT enviado por email, lo verifica con API_REGISTER_SECRET, extrae los datos del usuario y lo crea en base de datos. Devuelve sessionToken (1h) y refreshToken (7d).</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
@@ -289,6 +286,75 @@
         </div>
       </div>
       <div class="endpoint-body" id="body-2" style="display:none">
+        <p class="full-desc">Segunda fase del registro. Recibe el JWT enviado por email, lo verifica con API_REGISTER_SECRET, extrae los datos del usuario y lo crea en base de datos. Devuelve sessionToken (1h) y refreshToken (7d).</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Body</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">token</td>
+        <td class="param-desc">string — JWT de verificación obtenido del email (válido 5min, firmado con API_REGISTER_SECRET)</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Usuario creado correctamente</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">id</td><td class="param-desc">string — UUID del usuario recién creado</td></tr>
+          <tr><td class="param-name">role</td><td class="param-desc">string — rol asignado: 'student' | 'teacher' | 'admin'</td></tr>
+          <tr><td class="param-name">sessionToken</td><td class="param-desc">string — JWT con payload {id, name, lastName, email, role}, expira en 1h</td></tr>
+          <tr><td class="param-name">refreshToken</td><td class="param-desc">string — JWT con payload {id}, expira en 7d</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el campo token</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">401</span>
+        <span class="response-desc">Token inválido o expirado</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">409</span>
+        <span class="response-desc">El email ya está en uso</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-3">
+      <div class="endpoint-header" onclick="toggle(3)">
+        <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
+        <span class="endpoint-path">/auth</span>
+        <span class="endpoint-desc-inline">Solicita un token de recuperación de contraseña para el email indicado. El token JWT tiene una validez de 5 minutos.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-3">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-3" style="display:none">
         <p class="full-desc">Solicita un token de recuperación de contraseña para el email indicado. El token JWT tiene una validez de 5 minutos.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -316,7 +382,7 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">token</td><td class="param-desc">string — JWT con payload {id, email}, expira en 5min</td></tr></tbody>
+          <tr><td class="param-name">passwordToken</td><td class="param-desc">string — JWT con payload {id, email}, expira en 5min</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -338,18 +404,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-3">
-      <div class="endpoint-header" onclick="toggle(3)">
+    <div class="endpoint-card" id="ep-4">
+      <div class="endpoint-header" onclick="toggle(4)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/auth/login</span>
         <span class="endpoint-desc-inline">Autentica un usuario con email y contraseña. Si son correctos devuelve un accessToken (1h) y un refreshToken (7d).</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-3">▼</span>
+          <span class="chevron" id="chev-4">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-3" style="display:none">
+      <div class="endpoint-body" id="body-4" style="display:none">
         <p class="full-desc">Autentica un usuario con email y contraseña. Si son correctos devuelve un accessToken (1h) y un refreshToken (7d).</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -411,18 +477,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-4">
-      <div class="endpoint-header" onclick="toggle(4)">
+    <div class="endpoint-card" id="ep-5">
+      <div class="endpoint-header" onclick="toggle(5)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/auth/refresh</span>
         <span class="endpoint-desc-inline">Genera un nuevo accessToken a partir de un refreshToken válido. Usar cuando el accessToken haya expirado.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-4">▼</span>
+          <span class="chevron" id="chev-5">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-4" style="display:none">
+      <div class="endpoint-body" id="body-5" style="display:none">
         <p class="full-desc">Genera un nuevo accessToken a partir de un refreshToken válido. Usar cuando el accessToken haya expirado.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -477,18 +543,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-5">
-      <div class="endpoint-header" onclick="toggle(5)">
+    <div class="endpoint-card" id="ep-6">
+      <div class="endpoint-header" onclick="toggle(6)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/auth/:token</span>
         <span class="endpoint-desc-inline">Cambia la contraseña del usuario usando el token de recuperación obtenido en PATCH /auth. El token se verifica y se extrae el email del payload.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-5">▼</span>
+          <span class="chevron" id="chev-6">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-5" style="display:none">
+      <div class="endpoint-body" id="body-6" style="display:none">
         <p class="full-desc">Cambia la contraseña del usuario usando el token de recuperación obtenido en PATCH /auth. El token se verifica y se extrae el email del payload.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -558,18 +624,18 @@
   <div class="group-section" id="group-user">
     <h2 class="group-title">/user</h2>
     
-    <div class="endpoint-card" id="ep-6">
-      <div class="endpoint-header" onclick="toggle(6)">
+    <div class="endpoint-card" id="ep-7">
+      <div class="endpoint-header" onclick="toggle(7)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/user</span>
         <span class="endpoint-desc-inline">Comprueba si existe un usuario con el email indicado. Devuelve un booleano, sin exponer datos del usuario.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-6">▼</span>
+          <span class="chevron" id="chev-7">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-6" style="display:none">
+      <div class="endpoint-body" id="body-7" style="display:none">
         <p class="full-desc">Comprueba si existe un usuario con el email indicado. Devuelve un booleano, sin exponer datos del usuario.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -614,18 +680,170 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-7">
-      <div class="endpoint-header" onclick="toggle(7)">
+    <div class="endpoint-card" id="ep-8">
+      <div class="endpoint-header" onclick="toggle(8)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/user/search</span>
+        <span class="endpoint-desc-inline">Busca estudiantes cuyo email contenga la cadena indicada en el query param q. Solo accesible por teacher y admin.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-8">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-8" style="display:none">
+        <p class="full-desc">Busca estudiantes cuyo email contenga la cadena indicada en el query param q. Solo accesible por teacher y admin.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Query params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">q</td>
+        <td class="param-desc">string — cadena parcial a buscar en el email</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Lista de estudiantes que coinciden</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">array — [{ id, name, lastName, email, role, institution_id }]</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el query param q</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos (rol student)</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-9">
+      <div class="endpoint-header" onclick="toggle(9)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/user/email/:email</span>
+        <span class="endpoint-desc-inline">Devuelve los datos de un usuario por su email. Usado por el teacher para buscar un alumno antes de añadirlo a su clase.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-9">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-9" style="display:none">
+        <p class="full-desc">Devuelve los datos de un usuario por su email. Usado por el teacher para buscar un alumno antes de añadirlo a su clase.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">email</td>
+        <td class="param-desc">string — email del usuario (URL-encoded)</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Datos del usuario</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">id</td><td class="param-desc">string — UUID</td></tr>
+          <tr><td class="param-name">name</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">lastName</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">email</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">role</td><td class="param-desc">string — 'student' | 'teacher' | 'admin'</td></tr>
+          <tr><td class="param-name">institution_id</td><td class="param-desc">string | null</td></tr>
+          <tr><td class="param-name">created_at</td><td class="param-desc">datetime | null</td></tr>
+          <tr><td class="param-name">updated_at</td><td class="param-desc">datetime | null</td></tr>
+          <tr><td class="param-name">last_login_at</td><td class="param-desc">datetime | null</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos (rol student)</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">No existe ningún usuario con ese email</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-10">
+      <div class="endpoint-header" onclick="toggle(10)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/user/:id</span>
         <span class="endpoint-desc-inline">Devuelve los datos de un usuario por su UUID.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-7">▼</span>
+          <span class="chevron" id="chev-10">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-7" style="display:none">
+      <div class="endpoint-body" id="body-10" style="display:none">
         <p class="full-desc">Devuelve los datos de un usuario por su UUID.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -683,19 +901,19 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-8">
-      <div class="endpoint-header" onclick="toggle(8)">
+    <div class="endpoint-card" id="ep-11">
+      <div class="endpoint-header" onclick="toggle(11)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/user/:id</span>
-        <span class="endpoint-desc-inline">Actualiza los datos de un usuario. Solo se modifican los campos enviados en el body.</span>
+        <span class="endpoint-desc-inline">Actualiza los datos de un usuario. Solo se modifican los campos enviados en el body. Envía un email de notificación al usuario indicando qué campos fueron modificados.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-8">▼</span>
+          <span class="chevron" id="chev-11">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-8" style="display:none">
-        <p class="full-desc">Actualiza los datos de un usuario. Solo se modifican los campos enviados en el body.</p>
+      <div class="endpoint-body" id="body-11" style="display:none">
+        <p class="full-desc">Actualiza los datos de un usuario. Solo se modifican los campos enviados en el body. Envía un email de notificación al usuario indicando qué campos fueron modificados.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -768,18 +986,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-9">
-      <div class="endpoint-header" onclick="toggle(9)">
+    <div class="endpoint-card" id="ep-12">
+      <div class="endpoint-header" onclick="toggle(12)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/user/:id</span>
         <span class="endpoint-desc-inline">Elimina un usuario por su UUID.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-9">▼</span>
+          <span class="chevron" id="chev-12">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-9" style="display:none">
+      <div class="endpoint-body" id="body-12" style="display:none">
         <p class="full-desc">Elimina un usuario por su UUID.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -829,18 +1047,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-10">
-      <div class="endpoint-header" onclick="toggle(10)">
+    <div class="endpoint-card" id="ep-13">
+      <div class="endpoint-header" onclick="toggle(13)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/user/:id/challenges</span>
         <span class="endpoint-desc-inline">Devuelve el historial de retos del usuario: todos los desafíos en los que está inscrito, con detalles del reto, estado (completed | in_progress) y fechas.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-10">▼</span>
+          <span class="chevron" id="chev-13">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-10" style="display:none">
+      <div class="endpoint-body" id="body-13" style="display:none">
         <p class="full-desc">Devuelve el historial de retos del usuario: todos los desafíos en los que está inscrito, con detalles del reto, estado (completed | in_progress) y fechas.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -905,19 +1123,19 @@
   <div class="group-section" id="group-class">
     <h2 class="group-title">/class</h2>
     
-    <div class="endpoint-card" id="ep-11">
-      <div class="endpoint-header" onclick="toggle(11)">
+    <div class="endpoint-card" id="ep-14">
+      <div class="endpoint-header" onclick="toggle(14)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/class</span>
-        <span class="endpoint-desc-inline">Crea una nueva clase asignada a un tutor.</span>
+        <span class="endpoint-desc-inline">Crea una nueva clase asignada a un tutor. Envía un email de confirmación al tutor con los detalles de la clase creada.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-11">▼</span>
+          <span class="chevron" id="chev-14">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-11" style="display:none">
-        <p class="full-desc">Crea una nueva clase asignada a un tutor.</p>
+      <div class="endpoint-body" id="body-14" style="display:none">
+        <p class="full-desc">Crea una nueva clase asignada a un tutor. Envía un email de confirmación al tutor con los detalles de la clase creada.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -963,7 +1181,12 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">id</td><td class="param-desc">string — UUID de la clase creada</td></tr></tbody>
+          <tr><td class="param-name">id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">name</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">tutor_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">description</td><td class="param-desc">string|null</td></tr>
+          <tr><td class="param-name">created_at</td><td class="param-desc">datetime</td></tr>
+          <tr><td class="param-name">updated_at</td><td class="param-desc">datetime</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -985,18 +1208,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-12">
-      <div class="endpoint-header" onclick="toggle(12)">
+    <div class="endpoint-card" id="ep-15">
+      <div class="endpoint-header" onclick="toggle(15)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/class/:id</span>
         <span class="endpoint-desc-inline">Devuelve los datos de una clase por su UUID.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-12">▼</span>
+          <span class="chevron" id="chev-15">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-12" style="display:none">
+      <div class="endpoint-body" id="body-15" style="display:none">
         <p class="full-desc">Devuelve los datos de una clase por su UUID.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1057,18 +1280,85 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-13">
-      <div class="endpoint-header" onclick="toggle(13)">
+    <div class="endpoint-card" id="ep-16">
+      <div class="endpoint-header" onclick="toggle(16)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/class/tutor/:tutor_id</span>
+        <span class="endpoint-desc-inline">Devuelve todas las clases en las que un usuario figura como tutor.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-16">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-16" style="display:none">
+        <p class="full-desc">Devuelve todas las clases en las que un usuario figura como tutor.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">tutor_id</td>
+        <td class="param-desc">string — UUID del tutor</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Lista de clases del tutor</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">Class[] — [{ id, name, tutor_id, description, created_at, updated_at }]</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el parámetro tutor_id</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-17">
+      <div class="endpoint-header" onclick="toggle(17)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/class/:id</span>
         <span class="endpoint-desc-inline">Actualiza los datos de una clase. Solo se modifican los campos enviados.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-13">▼</span>
+          <span class="chevron" id="chev-17">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-13" style="display:none">
+      <div class="endpoint-body" id="body-17" style="display:none">
         <p class="full-desc">Actualiza los datos de una clase. Solo se modifican los campos enviados.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1144,18 +1434,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-14">
-      <div class="endpoint-header" onclick="toggle(14)">
+    <div class="endpoint-card" id="ep-18">
+      <div class="endpoint-header" onclick="toggle(18)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/class/:id</span>
         <span class="endpoint-desc-inline">Elimina una clase por su UUID. Elimina en cascada sus challenges y matrículas.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-14">▼</span>
+          <span class="chevron" id="chev-18">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-14" style="display:none">
+      <div class="endpoint-body" id="body-18" style="display:none">
         <p class="full-desc">Elimina una clase por su UUID. Elimina en cascada sus challenges y matrículas.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1215,18 +1505,74 @@
   <div class="group-section" id="group-institution">
     <h2 class="group-title">/institution</h2>
     
-    <div class="endpoint-card" id="ep-15">
-      <div class="endpoint-header" onclick="toggle(15)">
+    <div class="endpoint-card" id="ep-19">
+      <div class="endpoint-header" onclick="toggle(19)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/institution</span>
+        <span class="endpoint-desc-inline">Devuelve todas las instituciones registradas. Solo accesible por admin.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-19">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-19" style="display:none">
+        <p class="full-desc">Devuelve todas las instituciones registradas. Solo accesible por admin.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Lista de instituciones</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">InstitutionData[]</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">Solo admin puede listar instituciones</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-20">
+      <div class="endpoint-header" onclick="toggle(20)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/institution</span>
         <span class="endpoint-desc-inline">Crea una nueva institución educativa con sus dominios de alumno y profesor.</span>
         <div class="endpoint-badges">
           <span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-15">▼</span>
+          <span class="chevron" id="chev-20">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-15" style="display:none">
+      <div class="endpoint-body" id="body-20" style="display:none">
         <p class="full-desc">Crea una nueva institución educativa con sus dominios de alumno y profesor.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1273,7 +1619,11 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">id</td><td class="param-desc">string — UUID de la institución</td></tr></tbody>
+          <tr><td class="param-name">id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">name</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">student_domain</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">teacher_domain</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">created_at</td><td class="param-desc">datetime</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -1295,18 +1645,75 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-16">
-      <div class="endpoint-header" onclick="toggle(16)">
+    <div class="endpoint-card" id="ep-21">
+      <div class="endpoint-header" onclick="toggle(21)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/institution/domain/:domain</span>
+        <span class="endpoint-desc-inline">Busca una institución por dominio de email. Devuelve el nombre de la institución y el rol asociado a ese dominio (student o teacher). No requiere sesión, solo API key.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-21">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-21" style="display:none">
+        <p class="full-desc">Busca una institución por dominio de email. Devuelve el nombre de la institución y el rol asociado a ese dominio (student o teacher). No requiere sesión, solo API key.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">domain</td>
+        <td class="param-desc">string — dominio de email a buscar (ej: alumnos.universidad.es)</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Institución encontrada</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">name</td><td class="param-desc">string — nombre de la institución</td></tr>
+          <tr><td class="param-name">role</td><td class="param-desc">string — rol asociado al dominio: 'student' | 'teacher'</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Dominio no encontrado en ninguna institución</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-22">
+      <div class="endpoint-header" onclick="toggle(22)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/institution/:id</span>
         <span class="endpoint-desc-inline">Devuelve los datos de una institución por su UUID.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-16">▼</span>
+          <span class="chevron" id="chev-22">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-16" style="display:none">
+      <div class="endpoint-body" id="body-22" style="display:none">
         <p class="full-desc">Devuelve los datos de una institución por su UUID.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1366,18 +1773,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-17">
-      <div class="endpoint-header" onclick="toggle(17)">
+    <div class="endpoint-card" id="ep-23">
+      <div class="endpoint-header" onclick="toggle(23)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/institution/:id</span>
         <span class="endpoint-desc-inline">Actualiza los datos de una institución. Solo se modifican los campos enviados.</span>
         <div class="endpoint-badges">
           <span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-17">▼</span>
+          <span class="chevron" id="chev-23">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-17" style="display:none">
+      <div class="endpoint-body" id="body-23" style="display:none">
         <p class="full-desc">Actualiza los datos de una institución. Solo se modifican los campos enviados.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1462,18 +1869,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-18">
-      <div class="endpoint-header" onclick="toggle(18)">
+    <div class="endpoint-card" id="ep-24">
+      <div class="endpoint-header" onclick="toggle(24)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/institution/:id</span>
         <span class="endpoint-desc-inline">Elimina una institución. Los usuarios de esa institución quedan con institution_id a null.</span>
         <div class="endpoint-badges">
           <span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-18">▼</span>
+          <span class="chevron" id="chev-24">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-18" style="display:none">
+      <div class="endpoint-body" id="body-24" style="display:none">
         <p class="full-desc">Elimina una institución. Los usuarios de esa institución quedan con institution_id a null.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1538,19 +1945,19 @@
   <div class="group-section" id="group-user-class">
     <h2 class="group-title">/user-class</h2>
     
-    <div class="endpoint-card" id="ep-19">
-      <div class="endpoint-header" onclick="toggle(19)">
+    <div class="endpoint-card" id="ep-25">
+      <div class="endpoint-header" onclick="toggle(25)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/user-class</span>
-        <span class="endpoint-desc-inline">Añade un usuario a una clase. Verifica que el usuario y la clase existan y que no esté ya en ella.</span>
+        <span class="endpoint-desc-inline">Añade un usuario a una clase. Verifica que el usuario y la clase existan y que no esté ya en ella. Envía un email de notificación al usuario informándole de su incorporación a la clase.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-19">▼</span>
+          <span class="chevron" id="chev-25">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-19" style="display:none">
-        <p class="full-desc">Añade un usuario a una clase. Verifica que el usuario y la clase existan y que no esté ya en ella.</p>
+      <div class="endpoint-body" id="body-25" style="display:none">
+        <p class="full-desc">Añade un usuario a una clase. Verifica que el usuario y la clase existan y que no esté ya en ella. Envía un email de notificación al usuario informándole de su incorporación a la clase.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -1592,7 +1999,9 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">message</td><td class="param-desc">string</td></tr></tbody>
+          <tr><td class="param-name">user_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">class_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">joined_at</td><td class="param-desc">datetime</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -1624,19 +2033,19 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-20">
-      <div class="endpoint-header" onclick="toggle(20)">
+    <div class="endpoint-card" id="ep-26">
+      <div class="endpoint-header" onclick="toggle(26)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/user-class</span>
-        <span class="endpoint-desc-inline">Elimina un usuario de una clase.</span>
+        <span class="endpoint-desc-inline">Elimina un usuario de una clase. Envía un email de notificación al usuario informándole de su baja en la clase.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-20">▼</span>
+          <span class="chevron" id="chev-26">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-20" style="display:none">
-        <p class="full-desc">Elimina un usuario de una clase.</p>
+      <div class="endpoint-body" id="body-26" style="display:none">
+        <p class="full-desc">Elimina un usuario de una clase. Envía un email de notificación al usuario informándole de su baja en la clase.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -1705,19 +2114,19 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-21">
-      <div class="endpoint-header" onclick="toggle(21)">
+    <div class="endpoint-card" id="ep-27">
+      <div class="endpoint-header" onclick="toggle(27)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/user-class/user/:user_id</span>
-        <span class="endpoint-desc-inline">Devuelve todas las clases a las que pertenece un usuario.</span>
+        <span class="endpoint-desc-inline">Devuelve todas las clases a las que pertenece un usuario, con los detalles completos de cada clase y la fecha de incorporación.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-21">▼</span>
+          <span class="chevron" id="chev-27">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-21" style="display:none">
-        <p class="full-desc">Devuelve todas las clases a las que pertenece un usuario.</p>
+      <div class="endpoint-body" id="body-27" style="display:none">
+        <p class="full-desc">Devuelve todas las clases a las que pertenece un usuario, con los detalles completos de cada clase y la fecha de incorporación.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -1750,12 +2159,12 @@
             <div class="responses-wrapper">
       <div class="response-item">
         <span class="status-badge" style="background:#49cc90">200</span>
-        <span class="response-desc">Lista de relaciones user-class</span>
+        <span class="response-desc">Lista de clases del usuario</span>
         
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">data</td><td class="param-desc">UserClass[]</td></tr></tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">array — [{ id, name, tutor_id, description, created_at, updated_at, joined_at }]</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -1772,18 +2181,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-22">
-      <div class="endpoint-header" onclick="toggle(22)">
+    <div class="endpoint-card" id="ep-28">
+      <div class="endpoint-header" onclick="toggle(28)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/user-class/class/:class_id</span>
         <span class="endpoint-desc-inline">Devuelve todos los usuarios que pertenecen a una clase.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-22">▼</span>
+          <span class="chevron" id="chev-28">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-22" style="display:none">
+      <div class="endpoint-body" id="body-28" style="display:none">
         <p class="full-desc">Devuelve todos los usuarios que pertenecen a una clase.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1843,18 +2252,18 @@
   <div class="group-section" id="group-enrollment">
     <h2 class="group-title">/enrollment</h2>
     
-    <div class="endpoint-card" id="ep-23">
-      <div class="endpoint-header" onclick="toggle(23)">
+    <div class="endpoint-card" id="ep-29">
+      <div class="endpoint-header" onclick="toggle(29)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/enrollment</span>
         <span class="endpoint-desc-inline">Matricula un usuario en un desafío. Verifica que el usuario y el desafío existan y que no esté ya matriculado.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-23">▼</span>
+          <span class="chevron" id="chev-29">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-23" style="display:none">
+      <div class="endpoint-body" id="body-29" style="display:none">
         <p class="full-desc">Matricula un usuario en un desafío. Verifica que el usuario y el desafío existan y que no esté ya matriculado.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -1897,7 +2306,10 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">message</td><td class="param-desc">string</td></tr></tbody>
+          <tr><td class="param-name">user_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">challenge_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">enrolled_at</td><td class="param-desc">datetime</td></tr>
+          <tr><td class="param-name">completed_at</td><td class="param-desc">datetime|null</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -1924,18 +2336,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-24">
-      <div class="endpoint-header" onclick="toggle(24)">
+    <div class="endpoint-card" id="ep-30">
+      <div class="endpoint-header" onclick="toggle(30)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/enrollment</span>
         <span class="endpoint-desc-inline">Desmatricula un usuario de un desafío.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-24">▼</span>
+          <span class="chevron" id="chev-30">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-24" style="display:none">
+      <div class="endpoint-body" id="body-30" style="display:none">
         <p class="full-desc">Desmatricula un usuario de un desafío.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2000,18 +2412,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-25">
-      <div class="endpoint-header" onclick="toggle(25)">
+    <div class="endpoint-card" id="ep-31">
+      <div class="endpoint-header" onclick="toggle(31)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/enrollment/complete</span>
         <span class="endpoint-desc-inline">Marca un desafío como completado para un usuario. Solo teacher y admin.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-25">▼</span>
+          <span class="chevron" id="chev-31">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-25" style="display:none">
+      <div class="endpoint-body" id="body-31" style="display:none">
         <p class="full-desc">Marca un desafío como completado para un usuario. Solo teacher y admin.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2086,18 +2498,104 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-26">
-      <div class="endpoint-header" onclick="toggle(26)">
+    <div class="endpoint-card" id="ep-32">
+      <div class="endpoint-header" onclick="toggle(32)">
+        <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
+        <span class="endpoint-path">/enrollment/uncomplete</span>
+        <span class="endpoint-desc-inline">Desmarca un desafío como completado para un usuario. Revierte la puntuación del usuario y elimina el registro de stats. Solo teacher y admin.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-32">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-32" style="display:none">
+        <p class="full-desc">Desmarca un desafío como completado para un usuario. Revierte la puntuación del usuario y elimina el registro de stats. Solo teacher y admin.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Body</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">user_id</td>
+        <td class="param-desc">string — UUID del usuario</td>
+      </tr>
+      <tr>
+        <td class="param-name">challenge_id</td>
+        <td class="param-desc">string — UUID del desafío</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Desafío desmarcado como completado</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">message</td><td class="param-desc">string</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Faltan user_id o challenge_id</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos (rol student)</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Matrícula no encontrada</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">409</span>
+        <span class="response-desc">El desafío no estaba completado</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-33">
+      <div class="endpoint-header" onclick="toggle(33)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/enrollment/user/:user_id</span>
         <span class="endpoint-desc-inline">Devuelve todas las matrículas de un usuario.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-26">▼</span>
+          <span class="chevron" id="chev-33">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-26" style="display:none">
+      <div class="endpoint-body" id="body-33" style="display:none">
         <p class="full-desc">Devuelve todas las matrículas de un usuario.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2153,18 +2651,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-27">
-      <div class="endpoint-header" onclick="toggle(27)">
+    <div class="endpoint-card" id="ep-34">
+      <div class="endpoint-header" onclick="toggle(34)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/enrollment/challenge/:challenge_id</span>
         <span class="endpoint-desc-inline">Devuelve todos los usuarios matriculados en un desafío.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-27">▼</span>
+          <span class="chevron" id="chev-34">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-27" style="display:none">
+      <div class="endpoint-body" id="body-34" style="display:none">
         <p class="full-desc">Devuelve todos los usuarios matriculados en un desafío.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2224,19 +2722,19 @@
   <div class="group-section" id="group-challenge">
     <h2 class="group-title">/challenge</h2>
     
-    <div class="endpoint-card" id="ep-28">
-      <div class="endpoint-header" onclick="toggle(28)">
+    <div class="endpoint-card" id="ep-35">
+      <div class="endpoint-header" onclick="toggle(35)">
         <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
         <span class="endpoint-path">/challenge</span>
-        <span class="endpoint-desc-inline">Crea un nuevo desafío asociado a una clase. Verifica que la clase exista.</span>
+        <span class="endpoint-desc-inline">Crea un nuevo desafío asociado a una clase. Verifica que la clase exista. Envía un email de confirmación al tutor de la clase con los detalles del desafío creado.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-28">▼</span>
+          <span class="chevron" id="chev-35">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-28" style="display:none">
-        <p class="full-desc">Crea un nuevo desafío asociado a una clase. Verifica que la clase exista.</p>
+      <div class="endpoint-body" id="body-35" style="display:none">
+        <p class="full-desc">Crea un nuevo desafío asociado a una clase. Verifica que la clase exista. Envía un email de confirmación al tutor de la clase con los detalles del desafío creado.</p>
         <div class="section-tabs">
           <div class="tab-section">
             <div class="tab-title">Parámetros</div>
@@ -2249,6 +2747,10 @@
       <tr>
         <td class="param-name">x-session-token</td>
         <td class="param-desc">string — JWT de sesión</td>
+      </tr>
+      <tr>
+        <td class="param-name">Content-Type</td>
+        <td class="param-desc">multipart/form-data (si se sube imagen) | application/json</td>
       </tr></tbody>
         </table>
       </div>
@@ -2268,6 +2770,18 @@
       <tr>
         <td class="param-name">description</td>
         <td class="param-desc">string — (opcional) descripción del desafío</td>
+      </tr>
+      <tr>
+        <td class="param-name">image</td>
+        <td class="param-desc">file — (opcional) archivo de imagen (multipart/form-data); o string URL si no se sube archivo</td>
+      </tr>
+      <tr>
+        <td class="param-name">points</td>
+        <td class="param-desc">number — (opcional) puntos del desafío, por defecto 100</td>
+      </tr>
+      <tr>
+        <td class="param-name">auto_enroll</td>
+        <td class="param-desc">boolean — (opcional) si true, matricula automáticamente a todos los alumnos de la clase al crear el desafío. Por defecto false.</td>
       </tr></tbody>
         </table>
       </div></div>
@@ -2282,7 +2796,14 @@
         <table class="param-table schema-table">
           <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
           <tbody>
-          <tr><td class="param-name">id</td><td class="param-desc">string — UUID del desafío creado</td></tr></tbody>
+          <tr><td class="param-name">id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">name</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">class_id</td><td class="param-desc">string</td></tr>
+          <tr><td class="param-name">description</td><td class="param-desc">string|null</td></tr>
+          <tr><td class="param-name">image</td><td class="param-desc">string|null</td></tr>
+          <tr><td class="param-name">points</td><td class="param-desc">number</td></tr>
+          <tr><td class="param-name">created_at</td><td class="param-desc">datetime</td></tr>
+          <tr><td class="param-name">updated_at</td><td class="param-desc">datetime</td></tr></tbody>
         </table>
       </div>
       <div class="response-item">
@@ -2309,18 +2830,182 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-29">
-      <div class="endpoint-header" onclick="toggle(29)">
+    <div class="endpoint-card" id="ep-36">
+      <div class="endpoint-header" onclick="toggle(36)">
+        <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
+        <span class="endpoint-path">/challenge/:id/image</span>
+        <span class="endpoint-desc-inline">Sube o reemplaza la imagen de un desafío. Si el desafío ya tenía imagen, la elimina del disco antes de guardar la nueva. Guarda el archivo en uploads/challenges/ y almacena la ruta relativa en la columna image.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-36">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-36" style="display:none">
+        <p class="full-desc">Sube o reemplaza la imagen de un desafío. Si el desafío ya tenía imagen, la elimina del disco antes de guardar la nueva. Guarda el archivo en uploads/challenges/ y almacena la ruta relativa en la columna image.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr>
+      <tr>
+        <td class="param-name">Content-Type</td>
+        <td class="param-desc">multipart/form-data</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">id</td>
+        <td class="param-desc">string — UUID del desafío</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Body</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">image</td>
+        <td class="param-desc">file — archivo de imagen (campo multipart 'image'). Formatos: cualquier MIME image/*. Tamaño máximo: 5 MB.</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Imagen subida correctamente</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">image</td><td class="param-desc">string — ruta relativa de la imagen: '/uploads/challenges/{uuid}.{ext}'</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el archivo image o el parámetro id</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos (rol student)</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Desafío no encontrado</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-37">
+      <div class="endpoint-header" onclick="toggle(37)">
+        <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
+        <span class="endpoint-path">/challenge/:id/image</span>
+        <span class="endpoint-desc-inline">Elimina la imagen de un desafío: borra el archivo del disco y pone la columna image a null.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-37">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-37" style="display:none">
+        <p class="full-desc">Elimina la imagen de un desafío: borra el archivo del disco y pone la columna image a null.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">id</td>
+        <td class="param-desc">string — UUID del desafío</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Imagen eliminada</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">message</td><td class="param-desc">string — 'Image deleted successfully'</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos (rol student)</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Desafío no encontrado o sin imagen</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-38">
+      <div class="endpoint-header" onclick="toggle(38)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/challenge/class/:class_id</span>
         <span class="endpoint-desc-inline">Devuelve todos los desafíos de una clase.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-29">▼</span>
+          <span class="chevron" id="chev-38">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-29" style="display:none">
+      <div class="endpoint-body" id="body-38" style="display:none">
         <p class="full-desc">Devuelve todos los desafíos de una clase.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2376,18 +3061,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-30">
-      <div class="endpoint-header" onclick="toggle(30)">
+    <div class="endpoint-card" id="ep-39">
+      <div class="endpoint-header" onclick="toggle(39)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/challenge/:id</span>
         <span class="endpoint-desc-inline">Devuelve los datos de un desafío por su UUID.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-30">▼</span>
+          <span class="chevron" id="chev-39">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-30" style="display:none">
+      <div class="endpoint-body" id="body-39" style="display:none">
         <p class="full-desc">Devuelve los datos de un desafío por su UUID.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2430,6 +3115,8 @@
           <tr><td class="param-name">name</td><td class="param-desc">string</td></tr>
           <tr><td class="param-name">class_id</td><td class="param-desc">string</td></tr>
           <tr><td class="param-name">description</td><td class="param-desc">string|null</td></tr>
+          <tr><td class="param-name">image</td><td class="param-desc">string|null</td></tr>
+          <tr><td class="param-name">points</td><td class="param-desc">number</td></tr>
           <tr><td class="param-name">created_at</td><td class="param-desc">datetime</td></tr>
           <tr><td class="param-name">updated_at</td><td class="param-desc">datetime</td></tr></tbody>
         </table>
@@ -2448,18 +3135,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-31">
-      <div class="endpoint-header" onclick="toggle(31)">
+    <div class="endpoint-card" id="ep-40">
+      <div class="endpoint-header" onclick="toggle(40)">
         <span class="method-badge" style="background:#fca130;color:#fff">PATCH</span>
         <span class="endpoint-path">/challenge/:id</span>
         <span class="endpoint-desc-inline">Actualiza los datos de un desafío. Solo se modifican los campos enviados.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-31">▼</span>
+          <span class="chevron" id="chev-40">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-31" style="display:none">
+      <div class="endpoint-body" id="body-40" style="display:none">
         <p class="full-desc">Actualiza los datos de un desafío. Solo se modifican los campos enviados.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2473,6 +3160,10 @@
       <tr>
         <td class="param-name">x-session-token</td>
         <td class="param-desc">string — JWT de sesión</td>
+      </tr>
+      <tr>
+        <td class="param-name">Content-Type</td>
+        <td class="param-desc">multipart/form-data (si se sube imagen) | application/json</td>
       </tr></tbody>
         </table>
       </div>
@@ -2499,6 +3190,18 @@
       <tr>
         <td class="param-name">description</td>
         <td class="param-desc">string — (opcional) nueva descripción</td>
+      </tr>
+      <tr>
+        <td class="param-name">image</td>
+        <td class="param-desc">file — (opcional) nueva imagen (multipart/form-data); string 'null' para eliminar la imagen; o string URL para actualizar sin subir archivo</td>
+      </tr>
+      <tr>
+        <td class="param-name">points</td>
+        <td class="param-desc">number — (opcional) nuevos puntos</td>
+      </tr>
+      <tr>
+        <td class="param-name">auto_enroll</td>
+        <td class="param-desc">boolean — (opcional) actualiza el valor de auto_enroll. No matricula retroactivamente a alumnos existentes.</td>
       </tr></tbody>
         </table>
       </div></div>
@@ -2540,18 +3243,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-32">
-      <div class="endpoint-header" onclick="toggle(32)">
+    <div class="endpoint-card" id="ep-41">
+      <div class="endpoint-header" onclick="toggle(41)">
         <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
         <span class="endpoint-path">/challenge/:id</span>
         <span class="endpoint-desc-inline">Elimina un desafío por su UUID. Elimina en cascada sus enrollments.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-32">▼</span>
+          <span class="chevron" id="chev-41">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-32" style="display:none">
+      <div class="endpoint-body" id="body-41" style="display:none">
         <p class="full-desc">Elimina un desafío por su UUID. Elimina en cascada sus enrollments.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2613,21 +3316,265 @@
       </div>
     </div>
   </div>
+  <div class="group-section" id="group-newsletter">
+    <h2 class="group-title">/newsletter</h2>
+    
+    <div class="endpoint-card" id="ep-42">
+      <div class="endpoint-header" onclick="toggle(42)">
+        <span class="method-badge" style="background:#49cc90;color:#fff">POST</span>
+        <span class="endpoint-path">/newsletter</span>
+        <span class="endpoint-desc-inline">Suscribe un email a la newsletter. Si el email ya existe pero está inactivo, lo reactiva. No requiere sesión, solo API key.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-42">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-42" style="display:none">
+        <p class="full-desc">Suscribe un email a la newsletter. Si el email ya existe pero está inactivo, lo reactiva. No requiere sesión, solo API key.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Body</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">email</td>
+        <td class="param-desc">string — email a suscribir</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Suscripción completada</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">message</td><td class="param-desc">string — 'Subscribed successfully'</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el campo email</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">409</span>
+        <span class="response-desc">El email ya está suscrito y activo</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-43">
+      <div class="endpoint-header" onclick="toggle(43)">
+        <span class="method-badge" style="background:#f93e3e;color:#fff">DELETE</span>
+        <span class="endpoint-path">/newsletter</span>
+        <span class="endpoint-desc-inline">Cancela la suscripción de un email. No requiere sesión, solo API key.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-43">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-43" style="display:none">
+        <p class="full-desc">Cancela la suscripción de un email. No requiere sesión, solo API key.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Body</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">email</td>
+        <td class="param-desc">string — email a desuscribir</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Desuscripción completada</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">message</td><td class="param-desc">string — 'Unsubscribed successfully'</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">400</span>
+        <span class="response-desc">Falta el campo email</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Email no encontrado o ya inactivo</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-44">
+      <div class="endpoint-header" onclick="toggle(44)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/newsletter/subscribers</span>
+        <span class="endpoint-desc-inline">Devuelve todos los registros de la newsletter. Solo accesible por admin.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-44">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-44" style="display:none">
+        <p class="full-desc">Devuelve todos los registros de la newsletter. Solo accesible por admin.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Lista de suscriptores</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">array — [{ id, email, active, subscribed_at, unsubscribed_at }]</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">Solo admin puede listar suscriptores</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="group-section" id="group-stats">
     <h2 class="group-title">/stats</h2>
     
-    <div class="endpoint-card" id="ep-33">
-      <div class="endpoint-header" onclick="toggle(33)">
+    <div class="endpoint-card" id="ep-45">
+      <div class="endpoint-header" onclick="toggle(45)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/stats/platform</span>
+        <span class="endpoint-desc-inline">Devuelve KPIs globales de la plataforma: usuarios, instituciones, clases, retos, matrículas y tasa de completado. Solo accesible por admin.</span>
+        <div class="endpoint-badges">
+          <span class="role-badge">admin</span>
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-45">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-45" style="display:none">
+        <p class="full-desc">Devuelve KPIs globales de la plataforma: usuarios, instituciones, clases, retos, matrículas y tasa de completado. Solo accesible por admin.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">KPIs globales de la plataforma</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">total_users</td><td class="param-desc">number — usuarios registrados</td></tr>
+          <tr><td class="param-name">total_institutions</td><td class="param-desc">number — instituciones registradas</td></tr>
+          <tr><td class="param-name">total_classes</td><td class="param-desc">number — clases creadas</td></tr>
+          <tr><td class="param-name">total_challenges</td><td class="param-desc">number — retos creados</td></tr>
+          <tr><td class="param-name">total_enrollments</td><td class="param-desc">number — matrículas totales</td></tr>
+          <tr><td class="param-name">completed_enrollments</td><td class="param-desc">number — matrículas completadas</td></tr>
+          <tr><td class="param-name">completion_rate</td><td class="param-desc">number — % de matrículas completadas sobre el total</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">Solo admin puede ver las estadísticas globales</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-46">
+      <div class="endpoint-header" onclick="toggle(46)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/stats/user/:user_id</span>
         <span class="endpoint-desc-inline">Devuelve el historial de puntos ganados por un usuario: qué retos completó, cuántos puntos obtuvo en cada uno y cuándo. Accesible por el propio usuario, teacher y admin.</span>
         <div class="endpoint-badges">
           
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-33">▼</span>
+          <span class="chevron" id="chev-46">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-33" style="display:none">
+      <div class="endpoint-body" id="body-46" style="display:none">
         <p class="full-desc">Devuelve el historial de puntos ganados por un usuario: qué retos completó, cuántos puntos obtuvo en cada uno y cuándo. Accesible por el propio usuario, teacher y admin.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2684,18 +3631,18 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-34">
-      <div class="endpoint-header" onclick="toggle(34)">
+    <div class="endpoint-card" id="ep-47">
+      <div class="endpoint-header" onclick="toggle(47)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/stats/challenge/:challenge_id</span>
         <span class="endpoint-desc-inline">Devuelve qué usuarios han completado un reto concreto y cuántos puntos ganaron. Útil para el teacher para ver el alcance de un reto.</span>
         <div class="endpoint-badges">
-          <span class="role-badge">teacher</span><span class="role-badge">admin</span>
+          
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-34">▼</span>
+          <span class="chevron" id="chev-47">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-34" style="display:none">
+      <div class="endpoint-body" id="body-47" style="display:none">
         <p class="full-desc">Devuelve qué usuarios han completado un reto concreto y cuántos puntos ganaron. Útil para el teacher para ver el alcance de un reto.</p>
         <div class="section-tabs">
           <div class="tab-section">
@@ -2758,18 +3705,90 @@
         </div>
       </div>
     </div>
-    <div class="endpoint-card" id="ep-35">
-      <div class="endpoint-header" onclick="toggle(35)">
+    <div class="endpoint-card" id="ep-48">
+      <div class="endpoint-header" onclick="toggle(48)">
+        <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
+        <span class="endpoint-path">/stats/class/:class_id/ranking</span>
+        <span class="endpoint-desc-inline">Devuelve el ranking de alumnos de una clase ordenado por puntos totales descendente. Hace JOIN entre user_class, users y stats en una sola consulta. Accesible por teacher, admin y los propios alumnos de la clase.</span>
+        <div class="endpoint-badges">
+          
+          <span class="impl-badge impl-yes">implemented</span>
+          <span class="chevron" id="chev-48">▼</span>
+        </div>
+      </div>
+      <div class="endpoint-body" id="body-48" style="display:none">
+        <p class="full-desc">Devuelve el ranking de alumnos de una clase ordenado por puntos totales descendente. Hace JOIN entre user_class, users y stats en una sola consulta. Accesible por teacher, admin y los propios alumnos de la clase.</p>
+        <div class="section-tabs">
+          <div class="tab-section">
+            <div class="tab-title">Parámetros</div>
+            <div class="params-wrapper">
+      <div class="param-section">
+        <div class="param-label">Headers</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">x-session-token</td>
+        <td class="param-desc">string — JWT de sesión</td>
+      </tr></tbody>
+        </table>
+      </div>
+      <div class="param-section">
+        <div class="param-label">Path params</div>
+        <table class="param-table">
+          <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+          <tbody>
+      <tr>
+        <td class="param-name">class_id</td>
+        <td class="param-desc">string — UUID de la clase</td>
+      </tr></tbody>
+        </table>
+      </div></div>
+          </div>
+          <div class="tab-section">
+            <div class="tab-title">Respuestas</div>
+            <div class="responses-wrapper">
+      <div class="response-item">
+        <span class="status-badge" style="background:#49cc90">200</span>
+        <span class="response-desc">Ranking de alumnos de la clase</span>
+        
+        <table class="param-table schema-table">
+          <thead><tr><th>Campo</th><th>Tipo / Descripción</th></tr></thead>
+          <tbody>
+          <tr><td class="param-name">data</td><td class="param-desc">array — [{ user_id, name, lastName, email, total_points, rank }] ordenado por total_points DESC, rank empieza en 1</td></tr></tbody>
+        </table>
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">403</span>
+        <span class="response-desc">El usuario no tiene permisos</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#fca130">404</span>
+        <span class="response-desc">Clase no encontrada</span>
+        
+      </div>
+      <div class="response-item">
+        <span class="status-badge" style="background:#f93e3e">500</span>
+        <span class="response-desc">Error interno del servidor</span>
+        
+      </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="endpoint-card" id="ep-49">
+      <div class="endpoint-header" onclick="toggle(49)">
         <span class="method-badge" style="background:#61affe;color:#fff">GET</span>
         <span class="endpoint-path">/stats/class/:class_id</span>
         <span class="endpoint-desc-inline">Devuelve KPIs agregados de una clase para el panel del teacher: alumnos, retos, participación, tasa de completado, puntos otorgados, etc.</span>
         <div class="endpoint-badges">
           <span class="role-badge">teacher</span><span class="role-badge">admin</span>
           <span class="impl-badge impl-yes">implemented</span>
-          <span class="chevron" id="chev-35">▼</span>
+          <span class="chevron" id="chev-49">▼</span>
         </div>
       </div>
-      <div class="endpoint-body" id="body-35" style="display:none">
+      <div class="endpoint-body" id="body-49" style="display:none">
         <p class="full-desc">Devuelve KPIs agregados de una clase para el panel del teacher: alumnos, retos, participación, tasa de completado, puntos otorgados, etc.</p>
         <div class="section-tabs">
           <div class="tab-section">

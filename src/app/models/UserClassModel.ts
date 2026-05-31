@@ -35,17 +35,28 @@ export default class UserClassModel extends Model {
     }
   }
 
-  static async findByUserId(user_id: string): Promise<UserClass[]> {
+  static async findByUserId(user_id: string): Promise<any[]> {
     const scope = "💽 UserClassModel:" + "findByUserId";
     const entryTime = DateUtils.obtainCurrentDate();
     try {
       Logger.write("Finding classes for user", scope);
       const [rows]: any = await this.connection.execute(
-        `SELECT * FROM user_class WHERE user_id = ?;`,
+        `SELECT
+          cl.id,
+          cl.name,
+          cl.tutor_id,
+          cl.description,
+          cl.created_at,
+          cl.updated_at,
+          uc.joined_at
+        FROM user_class uc
+        JOIN class cl ON uc.class_id = cl.id
+        WHERE uc.user_id = ?
+        ORDER BY uc.joined_at DESC;`,
         [user_id],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
-      return rows.map((row: any) => this.mapRow(row));
+      return rows;
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

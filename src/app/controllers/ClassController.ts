@@ -7,6 +7,9 @@ import Logger from "../../resources/utils/Logger";
 import DataView from "../views/DataView";
 import ErrorView from "../views/ErrorView";
 import ClassModel from "../models/ClassModel";
+import UserModel from "../models/UserModel";
+import Mailer from "@utils/Mailer";
+import ClassEmails from "@emails/ClassEmails";
 import { v4 as uuidv4 } from "uuid";
 
 const className = "🕹️ ClassController";
@@ -23,8 +26,43 @@ export default class ClassController extends Controller {
       const id = uuidv4();
       Logger.write("Creating class", scope);
       await ClassModel.create(id, name, description ?? null, tutor_id);
+      const [classObj, tutor] = await Promise.all([
+        ClassModel.findById(id),
+        UserModel.findById(tutor_id),
+      ]);
+      if (tutor) {
+        Logger.write("Sending class creation notification", scope);
+        new Mailer().send(
+          process.env.EMAIL_FROM as string,
+          tutor.email,
+          `Your class "${name}" is ready`,
+          ClassEmails.classCreatedEmail(tutor.name, name, description ?? null),
+        );
+      }
       Logger.write("Returning response", scope);
-      new DataView(res, { id }, entryTime).send();
+      new DataView(res, classObj!, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async getByTutor(req: Request, res: Response): Promise<void> {
+    const scope = className + ":" + "getByTutor";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.params.tutor_id) {
+        throw new NotEnoughDataError("tutor_id param is required");
+      }
+      Logger.write("Finding classes by tutor", scope);
+      const classes = await ClassModel.findByTutorId(req.params.tutor_id);
+      Logger.write("Returning response", scope);
+      new DataView(res, classes, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

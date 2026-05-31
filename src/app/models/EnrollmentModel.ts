@@ -118,6 +118,26 @@ export default class EnrollmentModel extends Model {
     }
   }
 
+  static async markUncompleted(user_id: string, challenge_id: string): Promise<void> {
+    const scope = "💽 EnrollmentModel:" + "markUncompleted";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Marking enrollment as uncompleted", scope);
+      await this.connection.execute(
+        `UPDATE enrollment SET completed_at = NULL WHERE user_id = ? AND challenge_id = ?;`,
+        [user_id, challenge_id],
+      );
+      Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't mark enrollment as uncompleted");
+    }
+  }
+
   static async delete(user_id: string, challenge_id: string): Promise<void> {
     const scope = "💽 EnrollmentModel:" + "delete";
     const entryTime = DateUtils.obtainCurrentDate();

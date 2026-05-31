@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import ApiError from "../../resources/errors/ApiError";
 import NotEnoughDataError from "../../resources/errors/NotEnoughDataError";
 import Controller from "../../resources/templates/Controller";
@@ -7,6 +8,8 @@ import Logger from "../../resources/utils/Logger";
 import DataView from "../views/DataView";
 import ErrorView from "../views/ErrorView";
 import UserModel from "../models/UserModel";
+import Mailer from "@utils/Mailer";
+import AuthEmails from "@emails/AuthEmails";
 
 export default class UserController extends Controller {
   static async checkUserExists(req: Request, res: Response): Promise<void> {
@@ -96,6 +99,13 @@ export default class UserController extends Controller {
 
       Logger.write("Updating user", scope);
       await UserModel.updateById(req.params.id, fields);
+      Logger.write("Sending profile update notification", scope);
+      new Mailer().send(
+        process.env.EMAIL_FROM as string,
+        user.email,
+        "Your EduGreen profile was updated",
+        AuthEmails.profileUpdatedEmail(user.name, Object.keys(fields)),
+      );
       Logger.write("Returning response", scope);
       new DataView(
         res,
@@ -112,6 +122,27 @@ export default class UserController extends Controller {
       }
     }
   }
+  static async getMyChallenges(req: Request, res: Response): Promise<void> {
+    const scope = "🕹️ UserController:" + "getMyChallenges";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      const token = req.headers["x-session-token"] as string;
+      const payload = jwt.verify(token, process.env.API_SECRET as string) as { id: string };
+      Logger.write("Fetching challenges for authenticated user", scope);
+      const data = await UserModel.findChallengesByUserId(payload.id);
+      Logger.write("Returning response", scope);
+      new DataView(res, { data }, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
   static async getChallenges(req: Request, res: Response): Promise<void> {
     const scope = "🕹️ UserController:" + "getChallenges";
     const entryTime = DateUtils.obtainCurrentDateString();
@@ -129,6 +160,87 @@ export default class UserController extends Controller {
       const data = await UserModel.findChallengesByUserId(req.params.id);
       Logger.write("Returning response", scope);
       new DataView(res, { data }, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async searchStudents(req: Request, res: Response): Promise<void> {
+    const scope = "🕹️ UserController:" + "searchStudents";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.query.q) {
+        throw new NotEnoughDataError("q query param is required");
+      }
+
+      Logger.write("Searching students by email", scope);
+      const students = await UserModel.searchStudentsByEmail(
+        req.query.q as string,
+      );
+
+      Logger.write("Returning response", scope);
+      new DataView(
+        res,
+        {
+          data: students.map((u) => ({
+            id: u.id,
+            name: u.name,
+            lastName: u.lastName,
+            email: u.email,
+            role: u.role,
+            institution_id: u.institution_id,
+          })),
+        },
+        entryTime,
+      ).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async getByEmail(req: Request, res: Response): Promise<void> {
+    const scope = "UserController:" + "getByEmail";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.params.email) {
+        throw new NotEnoughDataError("email param is required");
+      }
+
+      Logger.write("Getting user by email", scope);
+      const user = await UserModel.findByEmail(req.params.email);
+      if (!user) {
+        new ErrorView(res, 404, "User not found", entryTime).send();
+        return;
+      }
+
+      Logger.write("Returning response", scope);
+      new DataView(
+        res,
+        {
+          id: user.id,
+          name: user.name,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          institution_id: user.institution_id,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          last_login_at: user.last_login_at,
+        },
+        entryTime,
+      ).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

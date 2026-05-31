@@ -14,6 +14,25 @@ import ClassModel from "../models/ClassModel";
 const controllerName = "🕹️ StatsController";
 
 export default class StatsController extends Controller {
+  static async getPlatform(req: Request, res: Response): Promise<void> {
+    const scope = controllerName + ":" + "getPlatform";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      Logger.write("Calculating platform KPIs", scope);
+      const kpis = await StatsModel.getPlatformKpis();
+      Logger.write("Returning response", scope);
+      new DataView(res, kpis, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
   static async getByUser(req: Request, res: Response): Promise<void> {
     const scope = controllerName + ":" + "getByUser";
     const entryTime = DateUtils.obtainCurrentDateString();
@@ -63,6 +82,34 @@ export default class StatsController extends Controller {
         total_completions: completions.length,
         completions,
       }, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async getRanking(req: Request, res: Response): Promise<void> {
+    const scope = controllerName + ":" + "getRanking";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.params.class_id) {
+        throw new NotEnoughDataError("class_id param is required");
+      }
+      Logger.write("Finding class", scope);
+      const classObj = await ClassModel.findById(req.params.class_id);
+      if (!classObj) {
+        new ErrorView(res, 404, "Class not found", entryTime).send();
+        return;
+      }
+      Logger.write("Calculating class ranking", scope);
+      const data = await StatsModel.getClassRanking(req.params.class_id);
+      Logger.write("Returning response", scope);
+      new DataView(res, { data }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

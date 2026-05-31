@@ -12,6 +12,8 @@ import InfoNotFoundError from "@errors/InfoNotFoundError";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
+import Mailer from "@utils/Mailer";
+import AuthEmails from "@emails/AuthEmails";
 
 const className = "🕹️ AuthController";
 
@@ -59,7 +61,12 @@ export default class AuthController extends Controller {
       Logger.write("Returning response", scope);
       new DataView(
         res,
-        { id: user.id, sessionToken, refreshToken },
+        {
+          id: user.id,
+          role: user.role,
+          sessionToken,
+          refreshToken,
+        },
         entryTime,
       ).send();
     } catch (err) {
@@ -127,7 +134,7 @@ export default class AuthController extends Controller {
       }
     }
   }
-  static async createUser(req: Request, res: Response): Promise<void> {
+  static async register(req: Request, res: Response): Promise<void> {
     const scope = className + ":" + "createUser";
     const entryTime = DateUtils.obtainCurrentDateString();
     try {
@@ -155,31 +162,28 @@ export default class AuthController extends Controller {
       const institution_id = institutionMatch?.institution.id ?? null;
 
       const id = uuidv4();
-      Logger.write("Creating user in database", scope);
-      await UserModel.create(
-        id,
-        name,
-        lastName,
-        email,
-        hashedPassword,
-        role,
-        institution_id,
+      Logger.write("Generating registration token", scope);
+      const registrationToken = jwt.sign(
+        { id, name, lastName, email, hashedPassword, role, institution_id },
+        process.env.API_REGISTER_SECRET as string,
+        { expiresIn: "5m" },
       );
 
-      Logger.write("Generating tokens", scope);
-      const sessionToken = jwt.sign(
-        { id, name, lastName, email, role },
-        process.env.API_SECRET as string,
-        { expiresIn: "1h" },
-      );
-      const refreshToken = jwt.sign(
-        { id },
-        process.env.API_REFRESH_SECRET as string,
-        { expiresIn: "7d" },
+      Logger.write("Sending verification email", scope);
+      const verificationUrl = `${process.env.CLIENT_DOMAIN}?t=${registrationToken}`;
+      new Mailer().send(
+        process.env.EMAIL_FROM as string,
+        email,
+        "Verify your EduGreen account",
+        AuthEmails.verificationEmail(verificationUrl),
       );
 
       Logger.write("Returning response", scope);
-      new DataView(res, { id, role, sessionToken, refreshToken }, entryTime).send();
+      new DataView(
+        res,
+        { message: "Verification email sent" },
+        entryTime,
+      ).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -259,6 +263,82 @@ export default class AuthController extends Controller {
       new DataView(
         res,
         { message: "Password updated successfully" },
+        entryTime,
+      ).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+  static async createUser(req: Request, res: Response): Promise<void> {
+    const scope = className + ":" + "register";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.body.token) {
+        throw new NotEnoughDataError("token is required");
+      }
+
+      Logger.write("Verifying registration token", scope);
+      let decoded: jwt.JwtPayload;
+      try {
+        decoded = jwt.verify(
+          req.body.token,
+          process.env.API_REGISTER_SECRET as string,
+        ) as jwt.JwtPayload;
+      } catch {
+        new ErrorView(res, 401, "Invalid or expired token", entryTime).send();
+        return;
+      }
+
+      const {
+        id,
+        name,
+        lastName,
+        email,
+        hashedPassword,
+        role,
+        institution_id,
+      } = decoded;
+
+      Logger.write("Checking if email is already in use", scope);
+      const existingUser = await UserModel.findByEmail(email);
+      if (existingUser !== null) {
+        new ErrorView(res, 409, "Email is already in use", entryTime).send();
+        return;
+      }
+
+      Logger.write("Creating user in database", scope);
+      await UserModel.create(
+        id,
+        name,
+        lastName,
+        email,
+        hashedPassword,
+        role,
+        institution_id,
+      );
+
+      Logger.write("Generating tokens", scope);
+      const sessionToken = jwt.sign(
+        { id, name, lastName, email, role },
+        process.env.API_SECRET as string,
+        { expiresIn: "1h" },
+      );
+      const refreshToken = jwt.sign(
+        { id },
+        process.env.API_REFRESH_SECRET as string,
+        { expiresIn: "7d" },
+      );
+
+      Logger.write("Returning response", scope);
+      new DataView(
+        res,
+        { id, role, sessionToken, refreshToken },
         entryTime,
       ).send();
     } catch (err) {

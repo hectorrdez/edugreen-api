@@ -21,6 +21,7 @@ services:
       REPORTING_FOLDER: ${REPORTING_FOLDER}
     networks:
       - edugreen_pre
+      - edugreen_net
     depends_on:
       edugreen_pre_db:
         condition: service_healthy
@@ -53,6 +54,8 @@ services:
 networks:
   edugreen_pre:
     external: false
+  edugreen_net:
+    external: true
 
 volumes:
   edugreen_pre_db_data:
