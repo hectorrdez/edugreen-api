@@ -212,8 +212,16 @@ export default class AuthController extends Controller {
         process.env.API_SECRET as string,
         { expiresIn: "5m" },
       );
+      Logger.write("Sending password reset email", scope);
+      const resetUrl = `${process.env.CLIENT_RESET_DOMAIN}?t=${passwordToken}`;
+      new Mailer().send(
+        process.env.EMAIL_FROM as string,
+        req.body.email,
+        "Reset your EduGreen password",
+        AuthEmails.forgotPasswordEmail(resetUrl),
+      );
       Logger.write("Returning response", scope);
-      new DataView(res, { passwordToken }, entryTime).send();
+      new DataView(res, { message: "Password reset email sent" }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

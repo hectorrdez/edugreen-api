@@ -8,7 +8,7 @@ import DateUtils from "./resources/utils/Date";
 import Logger from "./resources/utils/Logger";
 import cors from "cors";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 fs.mkdirSync(path.join(process.cwd(), "uploads/challenges"), { recursive: true });
 
