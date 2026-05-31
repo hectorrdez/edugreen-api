@@ -29,7 +29,7 @@ export default class ChallengeController extends Controller {
     const scope = controllerName + ":" + "create";
     const entryTime = DateUtils.obtainCurrentDateString();
     try {
-      const { name, class_id, description, points } = req.body;
+      const { name, class_id, description, points, end_date } = req.body;
       if (!name || !class_id) {
         if (req.file) deleteImageFile(`/uploads/challenges/${req.file.filename}`);
         throw new NotEnoughDataError("name and class_id are required");
@@ -46,7 +46,7 @@ export default class ChallengeController extends Controller {
       const autoEnroll = req.body.auto_enroll === "true" || req.body.auto_enroll === true;
       const imagePath = req.file ? `/uploads/challenges/${req.file.filename}` : (req.body.image ?? null);
       Logger.write("Creating challenge", scope);
-      await ChallengeModel.create(id, name, class_id, resolvedPoints, autoEnroll, description ?? null, imagePath);
+      await ChallengeModel.create(id, name, class_id, resolvedPoints, autoEnroll, description ?? null, imagePath, end_date ?? null);
       const [challenge, tutor, classMembers] = await Promise.all([
         ChallengeModel.findById(id),
         UserModel.findById(classObj.tutor_id),
@@ -149,12 +149,13 @@ export default class ChallengeController extends Controller {
       if (!req.params.id) {
         throw new NotEnoughDataError("id param is required");
       }
-      const { name, description, points } = req.body;
-      const fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null } = {};
+      const { name, description, points, end_date } = req.body;
+      const fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null; end_date?: string | null } = {};
       if (name) fields.name = name;
       if (points !== undefined) fields.points = Number(points);
       if (description) fields.description = description;
       if (req.body.auto_enroll !== undefined) fields.auto_enroll = req.body.auto_enroll === "true" || req.body.auto_enroll === true;
+      if (end_date !== undefined) fields.end_date = end_date === "null" || end_date === null ? null : end_date;
 
       if (req.file) {
         fields.image = `/uploads/challenges/${req.file.filename}`;

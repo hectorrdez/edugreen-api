@@ -27,6 +27,8 @@ services:
       EMAIL_PASS: ${EMAIL_PASS}
       EMAIL_FROM: ${EMAIL_FROM}
       CLIENT_DOMAIN: ${CLIENT_DOMAIN}
+    volumes:
+      - edugreen_pro_uploads:/home/app/uploads
     networks:
       - edugreen_pro
     depends_on:
@@ -65,3 +67,4 @@ networks:
 
 volumes:
   edugreen_pro_db_data:
+  edugreen_pro_uploads:

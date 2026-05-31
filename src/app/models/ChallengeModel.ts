@@ -14,6 +14,7 @@ export default class ChallengeModel extends Model {
       Boolean(row.auto_enroll),
       row.description ?? null,
       row.image ?? null,
+      row.end_date ?? null,
       row.created_at ?? null,
       row.updated_at ?? null,
       Number(row.participants ?? 0),
@@ -112,14 +113,14 @@ export default class ChallengeModel extends Model {
     }
   }
 
-  static async create(id: string, name: string, class_id: string, points: number, auto_enroll: boolean, description: string | null, image: string | null): Promise<void> {
+  static async create(id: string, name: string, class_id: string, points: number, auto_enroll: boolean, description: string | null, image: string | null, end_date: string | null): Promise<void> {
     const scope = "💽 ChallengeModel:" + "create";
     const entryTime = DateUtils.obtainCurrentDate();
     try {
       Logger.write("Creating challenge", scope);
       await this.connection.execute(
-        `INSERT INTO challenge (id, name, class_id, points, auto_enroll, description, image) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        [id, name, class_id, points, auto_enroll, description, image],
+        `INSERT INTO challenge (id, name, class_id, points, auto_enroll, description, image, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        [id, name, class_id, points, auto_enroll, description, image, end_date],
       );
       Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
     } catch (err) {
@@ -132,7 +133,7 @@ export default class ChallengeModel extends Model {
     }
   }
 
-  static async updateById(id: string, fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null }): Promise<void> {
+  static async updateById(id: string, fields: { name?: string; points?: number; auto_enroll?: boolean; description?: string; image?: string | null; end_date?: string | null }): Promise<void> {
     const scope = "💽 ChallengeModel:" + "updateById";
     const entryTime = DateUtils.obtainCurrentDate();
     try {
