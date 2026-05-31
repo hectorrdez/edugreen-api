@@ -1,7 +1,7 @@
-name: "edugreen"
+name: "edugreen-pro"
 services:
-  edugreen_pre_api:
-    container_name: edugreen_pre_api
+  edugreen_pro_api:
+    container_name: edugreen_pro_api
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -20,18 +20,17 @@ services:
       REPORTING: ${REPORTING}
       REPORTING_FOLDER: ${REPORTING_FOLDER}
     networks:
-      - edugreen_pre
-      - edugreen_net
+      - edugreen_pro
     depends_on:
-      edugreen_pre_db:
+      edugreen_pro_db:
         condition: service_healthy
 
-  edugreen_pre_db:
+  edugreen_pro_db:
     build:
       context: ..
       dockerfile: docker/Dockerfile.db
     restart: on-failure
-    container_name: edugreen_pre_db
+    container_name: edugreen_pro_db
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
       MYSQL_DATABASE: ${DB_NAME}
@@ -40,9 +39,9 @@ services:
     tmpfs:
       - /var/run/mysqld
     volumes:
-      - edugreen_pre_db_data:/var/lib/mysql
+      - edugreen_pro_db_data:/var/lib/mysql
     networks:
-      - edugreen_pre
+      - edugreen_pro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -50,12 +49,11 @@ services:
       retries: 5
       start_period: 30s
     ports:
-      - 3306:3306
+      - ${DB_PORT}:3306
+
 networks:
-  edugreen_pre:
+  edugreen_pro:
     external: false
-  edugreen_net:
-    external: true
 
 volumes:
-  edugreen_pre_db_data:
+  edugreen_pro_db_data:
