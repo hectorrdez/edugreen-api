@@ -86,6 +86,24 @@ export default class InstitutionModel extends Model {
     }
   }
 
+  static async findAllNames(): Promise<{ id: string; name: string }[]> {
+    const scope = "💽 InstitutionModel:" + "findAllNames";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Finding all institution names", scope);
+      const [rows]: any = await this.connection.execute(`SELECT id, name FROM institution ORDER BY name;`);
+      Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
+      return rows.map((row: any) => ({ id: row.id, name: row.name }));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't find institutions");
+    }
+  }
+
   static async findAll(): Promise<Institution[]> {
     const scope = "💽 InstitutionModel:" + "findAll";
     const entryTime = DateUtils.obtainCurrentDate();
