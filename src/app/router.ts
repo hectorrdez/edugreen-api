@@ -29,6 +29,9 @@ router.route("/auth/:token").patch(auth.changePassword);
 router
   .route("/institution/domain/:domain")
   .get(InstitutionController.searchByDomain);
+router
+  .route("/institution/names")
+  .get(InstitutionController.getNames);
 
 // Newsletter Endpoints
 const newsletter = NewsletterController;

@@ -39,6 +39,25 @@ export default class InstitutionController extends Controller {
     }
   }
 
+  static async getNames(req: Request, res: Response): Promise<void> {
+    const scope = controllerName + ":" + "getNames";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      Logger.write("Finding all institution names", scope);
+      const names = await InstitutionModel.findAllNames();
+      Logger.write("Returning response", scope);
+      new DataView(res, names, entryTime).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
   static async getAll(req: Request, res: Response): Promise<void> {
     const scope = controllerName + ":" + "getAll";
     const entryTime = DateUtils.obtainCurrentDateString();
