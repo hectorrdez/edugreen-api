@@ -56,6 +56,26 @@ export default class StatsModel extends Model {
     }
   }
 
+  static async delete(user_id: string, challenge_id: string): Promise<void> {
+    const scope = "💽 StatsModel:" + "delete";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Deleting stats record", scope);
+      await this.connection.execute(
+        `DELETE FROM stats WHERE user_id = ? AND challenge_id = ?;`,
+        [user_id, challenge_id],
+      );
+      Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't delete the stats record");
+    }
+  }
+
   static async create(user_id: string, challenge_id: string, points: number): Promise<void> {
     const scope = "💽 StatsModel:" + "create";
     const entryTime = DateUtils.obtainCurrentDate();

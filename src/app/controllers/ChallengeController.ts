@@ -11,8 +11,6 @@ import ErrorView from "../views/ErrorView";
 import ChallengeModel from "../models/ChallengeModel";
 import ClassModel from "../models/ClassModel";
 import UserModel from "../models/UserModel";
-import UserClassModel from "../models/UserClassModel";
-import EnrollmentModel from "../models/EnrollmentModel";
 import Mailer from "@utils/Mailer";
 import ClassEmails from "@emails/ClassEmails";
 import { v4 as uuidv4 } from "uuid";
@@ -47,15 +45,10 @@ export default class ChallengeController extends Controller {
       const imagePath = req.file ? `/uploads/challenges/${req.file.filename}` : (req.body.image ?? null);
       Logger.write("Creating challenge", scope);
       await ChallengeModel.create(id, name, class_id, resolvedPoints, autoEnroll, description ?? null, imagePath, end_date ?? null);
-      const [challenge, tutor, classMembers] = await Promise.all([
+      const [challenge, tutor] = await Promise.all([
         ChallengeModel.findById(id),
         UserModel.findById(classObj.tutor_id),
-        autoEnroll ? UserClassModel.findByClassId(class_id) : Promise.resolve([]),
       ]);
-      if (autoEnroll && classMembers.length > 0) {
-        Logger.write("Auto-enrolling class members", scope);
-        await Promise.all(classMembers.map((uc) => EnrollmentModel.create(uc.user_id, id)));
-      }
       if (tutor) {
         Logger.write("Sending challenge creation notification", scope);
         new Mailer().send(
@@ -85,8 +78,11 @@ export default class ChallengeController extends Controller {
       if (!req.params.id) {
         throw new NotEnoughDataError("id param is required");
       }
+      const user_id = req.query.user_id as string | undefined;
       Logger.write("Finding challenge", scope);
-      const challenge = await ChallengeModel.findById(req.params.id);
+      const challenge = user_id
+        ? await ChallengeModel.findByIdWithUserStatus(req.params.id, user_id)
+        : await ChallengeModel.findById(req.params.id);
       if (!challenge) {
         new ErrorView(res, 404, "Challenge not found", entryTime).send();
         return;

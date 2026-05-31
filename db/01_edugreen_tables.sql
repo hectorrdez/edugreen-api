@@ -1,5 +1,7 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 DROP DATABASE IF EXISTS `edugreen`;
-CREATE DATABASE `edugreen`;
+CREATE DATABASE `edugreen` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `edugreen`;
 
 DROP TABLE IF EXISTS `stats`;
