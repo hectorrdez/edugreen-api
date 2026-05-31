@@ -212,6 +212,53 @@ export default class UserModel extends Model {
     }
   }
 
+  static async addPoints(id: string, points: number): Promise<void> {
+    const scope = "💽 UserModel:" + "addPoints";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Adding points to user", scope);
+      await this.connection.execute(
+        `UPDATE user SET points = points + ? WHERE id = ?;`,
+        [points, id],
+      );
+      Logger.write(
+        `The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`,
+        scope,
+      );
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't update user points");
+    }
+  }
+
+  static async searchStudentsByEmail(query: string): Promise<User[]> {
+    const scope = "💽 UserModel:" + "searchStudentsByEmail";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Searching students by email", scope);
+      const [rows]: any = await this.connection.execute(
+        `SELECT * FROM user WHERE email LIKE ? AND role = 'student';`,
+        [`%${query}%`],
+      );
+      Logger.write(
+        `The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`,
+        scope,
+      );
+      return rows.map((row: any) => this.mapRow(row));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't search students");
+    }
+  }
+
   static async checkIfEmailExists(email: string): Promise<any> {
     const scope = "💽 UserModel:" + "checkIfEmailExists";
     const entryTime = DateUtils.obtainCurrentDate();

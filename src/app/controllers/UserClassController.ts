@@ -9,6 +9,8 @@ import ErrorView from "../views/ErrorView";
 import UserClassModel from "../models/UserClassModel";
 import UserModel from "../models/UserModel";
 import ClassModel from "../models/ClassModel";
+import Mailer from "@utils/Mailer";
+import UserClassEmails from "@emails/UserClassEmails";
 
 const controllerName = "🕹️ UserClassController";
 
@@ -36,13 +38,28 @@ export default class UserClassController extends Controller {
       Logger.write("Checking existing relation", scope);
       const existing = await UserClassModel.findOne(user_id, class_id);
       if (existing) {
-        new ErrorView(res, 409, "User is already in this class", entryTime).send();
+        new ErrorView(
+          res,
+          409,
+          "User is already in this class",
+          entryTime,
+        ).send();
         return;
       }
       Logger.write("Adding user to class", scope);
       await UserClassModel.create(user_id, class_id);
+      const relation = await UserClassModel.findOne(user_id, class_id);
+
+      Logger.write("Sending class enrollment notification", scope);
+      new Mailer().send(
+        process.env.EMAIL_FROM as string,
+        user.email,
+        `You've been added to ${classObj.name}`,
+        UserClassEmails.addedToClassEmail(user.name, classObj.name, classObj.description),
+      );
+
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "User added to class successfully" }, entryTime).send();
+      new DataView(res, relation!, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -68,10 +85,28 @@ export default class UserClassController extends Controller {
         new ErrorView(res, 404, "User is not in this class", entryTime).send();
         return;
       }
+      Logger.write("Finding user and class", scope);
+      const [user, classObj] = await Promise.all([
+        UserModel.findById(user_id),
+        ClassModel.findById(class_id),
+      ]);
       Logger.write("Removing user from class", scope);
       await UserClassModel.delete(user_id, class_id);
+      if (user && classObj) {
+        Logger.write("Sending class removal notification", scope);
+        new Mailer().send(
+          process.env.EMAIL_FROM as string,
+          user.email,
+          `You've been removed from ${classObj.name}`,
+          UserClassEmails.removedFromClassEmail(user.name, classObj.name),
+        );
+      }
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "User removed from class successfully" }, entryTime).send();
+      new DataView(
+        res,
+        { message: "User removed from class successfully" },
+        entryTime,
+      ).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -97,9 +132,9 @@ export default class UserClassController extends Controller {
         return;
       }
       Logger.write("Finding classes for user", scope);
-      const relations = await UserClassModel.findByUserId(req.params.user_id);
+      const data = await UserClassModel.findByUserId(req.params.user_id);
       Logger.write("Returning response", scope);
-      new DataView(res, relations, entryTime).send();
+      new DataView(res, { data }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

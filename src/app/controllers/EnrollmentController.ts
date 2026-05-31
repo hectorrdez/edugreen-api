@@ -36,13 +36,19 @@ export default class EnrollmentController extends Controller {
       Logger.write("Checking existing enrollment", scope);
       const existing = await EnrollmentModel.findOne(user_id, challenge_id);
       if (existing) {
-        new ErrorView(res, 409, "User is already enrolled in this challenge", entryTime).send();
+        new ErrorView(
+          res,
+          409,
+          "User is already enrolled in this challenge",
+          entryTime,
+        ).send();
         return;
       }
       Logger.write("Creating enrollment", scope);
       await EnrollmentModel.create(user_id, challenge_id);
+      const enrollment = await EnrollmentModel.findOne(user_id, challenge_id);
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "Enrolled successfully" }, entryTime).send();
+      new DataView(res, enrollment!, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -68,7 +74,9 @@ export default class EnrollmentController extends Controller {
         return;
       }
       Logger.write("Finding enrollments by user", scope);
-      const enrollments = await EnrollmentModel.findByUserId(req.params.user_id);
+      const enrollments = await EnrollmentModel.findByUserId(
+        req.params.user_id,
+      );
       Logger.write("Returning response", scope);
       new DataView(res, enrollments, entryTime).send();
     } catch (err) {
@@ -96,7 +104,9 @@ export default class EnrollmentController extends Controller {
         return;
       }
       Logger.write("Finding enrollments by challenge", scope);
-      const enrollments = await EnrollmentModel.findByChallengeId(req.params.challenge_id);
+      const enrollments = await EnrollmentModel.findByChallengeId(
+        req.params.challenge_id,
+      );
       Logger.write("Returning response", scope);
       new DataView(res, enrollments, entryTime).send();
     } catch (err) {
@@ -125,13 +135,55 @@ export default class EnrollmentController extends Controller {
         return;
       }
       if (enrollment.completed_at) {
-        new ErrorView(res, 409, "Challenge already completed", entryTime).send();
+        new ErrorView(
+          res,
+          409,
+          "Challenge already completed",
+          entryTime,
+        ).send();
         return;
       }
       Logger.write("Marking enrollment as completed", scope);
       await EnrollmentModel.markCompleted(user_id, challenge_id);
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "Challenge marked as completed" }, entryTime).send();
+      new DataView(
+        res,
+        { message: "Challenge marked as completed" },
+        entryTime,
+      ).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async uncomplete(req: Request, res: Response): Promise<void> {
+    const scope = controllerName + ":" + "uncomplete";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      const { user_id, challenge_id } = req.body;
+      if (!user_id || !challenge_id) {
+        throw new NotEnoughDataError("user_id and challenge_id are required");
+      }
+      Logger.write("Finding enrollment", scope);
+      const enrollment = await EnrollmentModel.findOne(user_id, challenge_id);
+      if (!enrollment) {
+        new ErrorView(res, 404, "Enrollment not found", entryTime).send();
+        return;
+      }
+      if (!enrollment.completed_at) {
+        new ErrorView(res, 409, "Challenge is not completed", entryTime).send();
+        return;
+      }
+      Logger.write("Marking enrollment as uncompleted", scope);
+      await EnrollmentModel.markUncompleted(user_id, challenge_id);
+      Logger.write("Returning response", scope);
+      new DataView(res, { message: "Challenge marked as uncompleted" }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -156,6 +208,10 @@ export default class EnrollmentController extends Controller {
       if (!enrollment) {
         new ErrorView(res, 404, "Enrollment not found", entryTime).send();
         return;
+      }
+      if (enrollment.completed_at) {
+        Logger.write("Resetting completed enrollment before deletion", scope);
+        await EnrollmentModel.markUncompleted(user_id, challenge_id);
       }
       Logger.write("Deleting enrollment", scope);
       await EnrollmentModel.delete(user_id, challenge_id);

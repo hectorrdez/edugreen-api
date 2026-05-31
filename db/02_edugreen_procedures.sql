@@ -33,6 +33,24 @@ BEGIN
     UPDATE `user` SET `points` = `points` - OLD.`points` WHERE `id` = OLD.`user_id`;
 END//
 
+DROP TRIGGER IF EXISTS after_enrollment_insert//
+
+CREATE TRIGGER after_enrollment_insert
+AFTER INSERT ON `enrollment`
+FOR EACH ROW
+BEGIN
+    UPDATE `challenge` SET `participants` = `participants` + 1 WHERE `id` = NEW.`challenge_id`;
+END//
+
+DROP TRIGGER IF EXISTS after_enrollment_delete//
+
+CREATE TRIGGER after_enrollment_delete
+AFTER DELETE ON `enrollment`
+FOR EACH ROW
+BEGIN
+    UPDATE `challenge` SET `participants` = `participants` - 1 WHERE `id` = OLD.`challenge_id`;
+END//
+
 DROP TRIGGER IF EXISTS after_enrollment_update//
 
 CREATE TRIGGER after_enrollment_update
@@ -46,6 +64,38 @@ BEGIN
     END IF;
     IF OLD.`completed_at` IS NOT NULL AND NEW.`completed_at` IS NULL THEN
         DELETE FROM `stats` WHERE `user_id` = NEW.`user_id` AND `challenge_id` = NEW.`challenge_id`;
+    END IF;
+END//
+
+DROP TRIGGER IF EXISTS after_challenge_update//
+
+CREATE TRIGGER after_challenge_update
+AFTER UPDATE ON `challenge`
+FOR EACH ROW
+BEGIN
+    IF OLD.`auto_enroll` = FALSE AND NEW.`auto_enroll` = TRUE THEN
+        INSERT IGNORE INTO `enrollment` (`user_id`, `challenge_id`)
+        SELECT uc.`user_id`, NEW.`id`
+        FROM `user_class` uc
+        INNER JOIN `user` u ON u.`id` = uc.`user_id`
+        WHERE uc.`class_id` = NEW.`class_id`
+          AND u.`role` = 'student';
+    END IF;
+END//
+
+DROP TRIGGER IF EXISTS after_challenge_insert//
+
+CREATE TRIGGER after_challenge_insert
+AFTER INSERT ON `challenge`
+FOR EACH ROW
+BEGIN
+    IF NEW.`auto_enroll` = TRUE THEN
+        INSERT IGNORE INTO `enrollment` (`user_id`, `challenge_id`)
+        SELECT uc.`user_id`, NEW.`id`
+        FROM `user_class` uc
+        INNER JOIN `user` u ON u.`id` = uc.`user_id`
+        WHERE uc.`class_id` = NEW.`class_id`
+          AND u.`role` = 'student';
     END IF;
 END//
 

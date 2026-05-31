@@ -18,13 +18,16 @@ export default class InstitutionController extends Controller {
     try {
       const { name, student_domain, teacher_domain } = req.body;
       if (!name || !student_domain || !teacher_domain) {
-        throw new NotEnoughDataError("name, student_domain and teacher_domain are required");
+        throw new NotEnoughDataError(
+          "name, student_domain and teacher_domain are required",
+        );
       }
       const id = uuidv4();
       Logger.write("Creating institution", scope);
       await InstitutionModel.create(id, name, student_domain, teacher_domain);
+      const institution = await InstitutionModel.findById(id);
       Logger.write("Returning response", scope);
-      new DataView(res, { id }, entryTime).send();
+      new DataView(res, institution!, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -89,13 +92,19 @@ export default class InstitutionController extends Controller {
         throw new NotEnoughDataError("id param is required");
       }
       const { name, student_domain, teacher_domain } = req.body;
-      const fields: { name?: string; student_domain?: string; teacher_domain?: string } = {};
+      const fields: {
+        name?: string;
+        student_domain?: string;
+        teacher_domain?: string;
+      } = {};
       if (name) fields.name = name;
       if (student_domain) fields.student_domain = student_domain;
       if (teacher_domain) fields.teacher_domain = teacher_domain;
 
       if (Object.keys(fields).length === 0) {
-        throw new NotEnoughDataError("At least one field is required to update");
+        throw new NotEnoughDataError(
+          "At least one field is required to update",
+        );
       }
       Logger.write("Finding institution", scope);
       const institution = await InstitutionModel.findById(req.params.id);
@@ -106,7 +115,37 @@ export default class InstitutionController extends Controller {
       Logger.write("Updating institution", scope);
       await InstitutionModel.updateById(req.params.id, fields);
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "Institution updated successfully" }, entryTime).send();
+      new DataView(
+        res,
+        { message: "Institution updated successfully" },
+        entryTime,
+      ).send();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+        new ErrorView(res, err.getCode(), err.getMessage(), entryTime).send();
+      } else {
+        Logger.error((err as Error).message, scope);
+        new ErrorView(res, 500, (err as Error).message, entryTime).send();
+      }
+    }
+  }
+
+  static async searchByDomain(req: Request, res: Response): Promise<void> {
+    const scope = controllerName + ":" + "searchByDomain";
+    const entryTime = DateUtils.obtainCurrentDateString();
+    try {
+      if (!req.params.domain) {
+        throw new NotEnoughDataError("domain param is required");
+      }
+      Logger.write("Finding institution by domain", scope);
+      const result = await InstitutionModel.findByDomain(req.params.domain);
+      if (!result) {
+        new ErrorView(res, 404, "Domain not found", entryTime).send();
+        return;
+      }
+      Logger.write("Returning response", scope);
+      new DataView(res, { name: result.institution.name, role: result.role }, entryTime).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);
@@ -134,7 +173,11 @@ export default class InstitutionController extends Controller {
       Logger.write("Deleting institution", scope);
       await InstitutionModel.deleteById(req.params.id);
       Logger.write("Returning response", scope);
-      new DataView(res, { message: "Institution deleted successfully" }, entryTime).send();
+      new DataView(
+        res,
+        { message: "Institution deleted successfully" },
+        entryTime,
+      ).send();
     } catch (err) {
       if (err instanceof ApiError) {
         Logger.error(err.getMessage(), scope);

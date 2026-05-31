@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS `challenge`;
 DROP TABLE IF EXISTS `class`;
 DROP TABLE IF EXISTS `user`;
 DROP TABLE IF EXISTS `institution`;
+DROP TABLE IF EXISTS `newsletter`;
 
 CREATE TABLE `institution`(
     `id` VARCHAR(40) PRIMARY KEY,
@@ -48,7 +49,10 @@ CREATE TABLE `challenge`(
     `id` VARCHAR(40) PRIMARY KEY,
     `name` VARCHAR(100) NOT NULL,
     `description` TEXT,
+    `image` VARCHAR(500) DEFAULT NULL,
     `points` INT NOT NULL DEFAULT 100,
+    `auto_enroll` BOOLEAN NOT NULL DEFAULT FALSE,
+    `participants` INT NOT NULL DEFAULT 0,
     `class_id` VARCHAR(40) NOT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -72,6 +76,14 @@ CREATE TABLE `enrollment`(
     PRIMARY KEY (`user_id`, `challenge_id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`challenge_id`) REFERENCES `challenge`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE `newsletter`(
+    `id` VARCHAR(40) PRIMARY KEY,
+    `email` VARCHAR(100) NOT NULL UNIQUE,
+    `active` BOOLEAN NOT NULL DEFAULT TRUE,
+    `subscribed_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `unsubscribed_at` DATETIME
 );
 
 CREATE TABLE `stats`(

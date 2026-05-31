@@ -38,6 +38,27 @@ export default class ClassModel extends Model {
     }
   }
 
+  static async findByTutorId(tutor_id: string): Promise<Class[]> {
+    const scope = "💽 ClassModel:" + "findByTutorId";
+    const entryTime = DateUtils.obtainCurrentDate();
+    try {
+      Logger.write("Finding classes by tutor", scope);
+      const [rows]: any = await this.connection.execute(
+        `SELECT * FROM class WHERE tutor_id = ?;`,
+        [tutor_id],
+      );
+      Logger.write(`The task lasted ${DateUtils.secondsDifferenceFromDate(entryTime)} seconds`, scope);
+      return rows.map((row: any) => this.mapRow(row));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        Logger.error(err.getMessage(), scope);
+      } else {
+        Logger.error((err as Error).message, scope);
+      }
+      throw new ApiError("Can't find classes for this tutor");
+    }
+  }
+
   static async create(id: string, name: string, description: string | null, tutor_id: string): Promise<void> {
     const scope = "💽 ClassModel:" + "create";
     const entryTime = DateUtils.obtainCurrentDate();

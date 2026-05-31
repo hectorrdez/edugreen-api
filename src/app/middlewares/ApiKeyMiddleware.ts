@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import Middleware from "../../resources/interfaces/Middleware";
 
 export default class ApiKeyMiddleware extends Middleware {

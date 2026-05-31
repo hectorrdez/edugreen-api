@@ -1,4 +1,5 @@
 /node_modules
+/uploads
 /data/logs
 /data/errors
 /docker/mysql.cnf
